@@ -35,6 +35,7 @@ export async function loadHaruData(user: User): Promise<AppData> {
     id: user.id,
     email: user.email ?? "",
     name: String(user.user_metadata?.display_name ?? user.email?.split("@")[0] ?? "나"),
+    realName: String(user.user_metadata?.real_name ?? ""),
     createdAt: user.created_at,
     lastSignInAt: user.last_sign_in_at,
   });

@@ -227,7 +227,8 @@ function profileDate(value?: string) {
 }
 
 export function ProfileView({ data, setData, onToast, onOpenSettings }: { data: AppData; setData: (data: AppData) => void; onToast: (message: string) => void; onOpenSettings: () => void }) {
-  const [name, setName] = useState(data.user.name);
+  const [nickname, setNickname] = useState(data.user.name);
+  const [realName, setRealName] = useState(data.user.realName ?? "");
   const [saving, setSaving] = useState(false);
   const recordDates = new Set([
     ...data.schedules.map((item) => item.date),
@@ -237,17 +238,19 @@ export function ProfileView({ data, setData, onToast, onOpenSettings }: { data: 
   ]);
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault();
-    const displayName = name.trim();
-    if (!displayName) return onToast("이름을 입력해 주세요");
-    if (displayName.length > 30) return onToast("이름은 30자 이내로 입력해 주세요");
-    if (/[<>]/.test(displayName)) return onToast("이름에 사용할 수 없는 문자가 포함되어 있어요");
-    if (displayName === data.user.name) return onToast("변경된 이름이 없어요");
+    const displayName = nickname.trim();
+    const realNameValue = realName.trim();
+    if (!displayName) return onToast("닉네임을 입력해 주세요");
+    if (displayName.length > 30) return onToast("닉네임은 30자 이내로 입력해 주세요");
+    if (realNameValue.length > 30) return onToast("실명은 30자 이내로 입력해 주세요");
+    if (/[<>]/.test(displayName) || /[<>]/.test(realNameValue)) return onToast("사용할 수 없는 문자가 포함되어 있어요");
+    if (displayName === data.user.name && realNameValue === (data.user.realName ?? "")) return onToast("변경된 정보가 없어요");
     setSaving(true);
     try {
-      const { error } = await getSupabase()!.auth.updateUser({ data: { display_name: displayName } });
+      const { error } = await getSupabase()!.auth.updateUser({ data: { display_name: displayName, real_name: realNameValue } });
       if (error) return onToast(error.message);
-      setData({ ...data, user: { ...data.user, name: displayName } });
-      onToast("프로필 이름을 변경했어요");
+      setData({ ...data, user: { ...data.user, name: displayName, realName: realNameValue } });
+      onToast("프로필 정보를 변경했어요");
     } catch (error) {
       onToast(error instanceof Error ? error.message : "프로필을 변경하지 못했어요");
     } finally {
@@ -256,8 +259,8 @@ export function ProfileView({ data, setData, onToast, onOpenSettings }: { data: 
   };
 
   return <><PageHeader eyebrow="나의 온결" title="프로필" /><div className="profile-layout">
-    <section className="profile-hero"><div className="profile-avatar" aria-hidden="true">{data.user.name.slice(0, 1).toUpperCase()}</div><span className="profile-badge">PERSONAL ARCHIVE</span><h2>{data.user.name}</h2><p>{data.user.email}</p><div className="profile-counts"><span><b>{data.schedules.length}</b>일정</span><span><b>{data.transactions.length}</b>거래</span><span><b>{data.diaries.length}</b>감정 일기</span><span><b>{data.dailyRecords.length}</b>하루 기록</span></div></section>
-    <div className="profile-details"><section className="profile-card"><div className="section-title"><div><h2>기본 정보</h2><span>기록에 표시되는 나의 이름</span></div></div><form className="profile-name-form" onSubmit={saveProfile}><label className="field"><span>이름</span><input value={name} maxLength={30} onChange={(event) => setName(event.target.value)} /></label><button className="primary" disabled={saving}>{saving ? "저장 중…" : "변경사항 저장"}</button></form><div className="profile-account"><span><small>로그인 이메일</small><b>{data.user.email}</b></span><span><small>온결을 시작한 날</small><b>{profileDate(data.user.createdAt)}</b></span><span><small>최근 로그인</small><b>{profileDate(data.user.lastSignInAt)}</b></span></div></section>
+    <section className="profile-hero"><div className="profile-avatar" aria-hidden="true">{data.user.name.slice(0, 1).toUpperCase()}</div><span className="profile-badge">PERSONAL ARCHIVE</span><h2>{data.user.name}</h2><p>삶의 결을 잇는 나만의 기록</p><div className="profile-counts"><span><b>{data.schedules.length}</b>일정</span><span><b>{data.transactions.length}</b>거래</span><span><b>{data.diaries.length}</b>감정 일기</span><span><b>{data.dailyRecords.length}</b>하루 기록</span></div></section>
+    <div className="profile-details"><section className="profile-card"><div className="section-title"><div><h2>기본 정보</h2><span>계정과 기록에 사용하는 정보</span></div></div><form className="profile-name-form" onSubmit={saveProfile}><label className="field"><span>닉네임</span><input value={nickname} maxLength={30} placeholder="온결에 표시할 이름" onChange={(event) => setNickname(event.target.value)} /></label><label className="field"><span>실명</span><input value={realName} maxLength={30} placeholder="선택 입력" onChange={(event) => setRealName(event.target.value)} /></label><button className="primary" disabled={saving}>{saving ? "저장 중…" : "변경사항 저장"}</button></form><div className="profile-account"><span><small>로그인 이메일</small><b>{data.user.email}</b></span><span><small>온결을 시작한 날</small><b>{profileDate(data.user.createdAt)}</b></span><span><small>최근 로그인</small><b>{profileDate(data.user.lastSignInAt)}</b></span></div></section>
     <section className="profile-card profile-history"><div><p>기록한 날짜</p><strong>{recordDates.size}<small>일</small></strong><span>일정, 소비, 감정과 작은 순간을 남긴 날이에요.</span></div><button className="ghost" onClick={onOpenSettings}>계정 및 보안 설정</button></section></div>
   </div></>;
 }

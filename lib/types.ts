@@ -7,6 +7,7 @@ export type TransactionSource = "manual" | "schedule_actual";
 export type AppUser = {
   id: string;
   name: string;
+  realName?: string;
   email: string;
   createdAt?: string;
   lastSignInAt?: string;

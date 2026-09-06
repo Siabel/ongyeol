@@ -43,7 +43,7 @@ test("includes account, place, and daily-record flows", async () => {
   assert.match(page, /values\.password !== values\.passwordConfirmation/);
   assert.match(page, /이미 가입되어 있는 이메일입니다/);
   assert.match(page, /비밀번호가 일치하지 않아요/);
-  assert.match(page, /이름을 입력해 주세요/);
+  assert.match(page, /닉네임을 입력해 주세요/);
   assert.match(page, /resetPasswordForEmail/);
   assert.match(page, /result\.data\.user\.identities\?\.length === 0/);
   assert.match(page, /blockedSignupEmail/);
@@ -252,6 +252,10 @@ test("provides a separate profile page backed by Supabase user metadata", async 
   assert.match(page, /<ProfileView/);
   assert.match(views, /function ProfileView/);
   assert.match(views, /display_name: displayName/);
+  assert.match(views, /real_name: realNameValue/);
+  assert.match(views, /<span>닉네임<\/span>/);
+  assert.match(views, /<span>실명<\/span>/);
   assert.match(dataLayer, /createdAt: user\.created_at/);
+  assert.match(dataLayer, /realName: String\(user\.user_metadata\?\.real_name/);
   assert.match(styles, /\.profile-layout/);
 });
