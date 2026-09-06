@@ -199,3 +199,43 @@ test("includes a separate Vercel build path and required deployment variables", 
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(envExample, /KAKAO_REST_API_KEY/);
 });
+
+test("provides a production-ready PWA shell and install experience", async () => {
+  const [manager, serviceWorker, manifest, layout, vercelConfig] = await Promise.all([
+    readFile(new URL("app/components/pwa-manager.tsx", root), "utf8"),
+    readFile(new URL("public/sw.js", root), "utf8"),
+    readFile(new URL("app/manifest.ts", root), "utf8"),
+    readFile(new URL("app/layout.tsx", root), "utf8"),
+    readFile(new URL("vercel.json", root), "utf8"),
+  ]);
+
+  assert.match(manager, /beforeinstallprompt/);
+  assert.match(manager, /navigator\.serviceWorker\.register\("\/sw\.js"/);
+  assert.match(manager, /오프라인/);
+  assert.match(manager, /SKIP_WAITING/);
+  assert.match(serviceWorker, /ongyeol-shell-v1/);
+  assert.match(serviceWorker, /request\.mode === "navigate"/);
+  assert.match(serviceWorker, /url\.origin !== self\.location\.origin/);
+  assert.match(manifest, /maskable-512\.png/);
+  assert.match(manifest, /icon-192\.png/);
+  assert.match(layout, /apple-touch-icon\.png/);
+  assert.match(vercelConfig, /Service-Worker-Allowed/);
+});
+
+test("keeps mobile pages within the viewport and explains unsupported Android installation", async () => {
+  const [page, styles, theme, manager] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+    readFile(new URL("app/components/pwa-manager.tsx", root), "utf8"),
+  ]);
+
+  assert.match(page, /className={`content view-\${view}`}/);
+  assert.match(page, /view === "ledger" \? "거래 추가"/);
+  assert.match(styles, /\.content,\.sidebar-collapsed \.content \{ width:100%; min-width:0; max-width:100%; margin-left:0/);
+  assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(theme, /\.content,\.sidebar-collapsed \.content \{ margin-left:0; \}/);
+  assert.match(manager, /Chrome에서 열기/);
+  assert.match(manager, /package=com\.android\.chrome/);
+  assert.match(manager, /7일 동안 보지 않기/);
+});

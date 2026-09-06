@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
+import { PwaManager } from "./components/pwa-manager";
 import "./globals.css";
 import "./ongyeol.css";
 
@@ -17,9 +18,18 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
   return {
+    applicationName: "온결",
     title: "온결 — 삶의 결을 잇는 기록",
     description: "일정과 장소, 지출, 감정과 작은 순간을 하나의 흐름으로 잇는 개인 기록 서비스",
-    icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    icons: {
+      icon: [
+        { url: "/favicon.svg", type: "image/svg+xml" },
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      shortcut: "/favicon.svg",
+      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
     manifest: "/manifest.webmanifest",
     appleWebApp: { capable: true, statusBarStyle: "default", title: "온결" },
     openGraph: { title: "온결 — 삶의 결을 잇는 기록", description: "일정 · 장소 · 지출 · 감정 · 작은 순간을 하나의 결로", images: [{ url: `${origin}/og.png`, width: 1792, height: 937 }] },
@@ -28,5 +38,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="ko"><body>{children}</body></html>;
+  return <html lang="ko"><body>{children}<PwaManager /></body></html>;
 }
