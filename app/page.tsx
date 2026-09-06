@@ -12,7 +12,7 @@ import type { AppData, DailyRecord, EmotionDiary, Schedule, ScheduleStatus, Tran
 import { AuthGate, SetupRequired } from "./components/auth-gate";
 import { BrandLogo, NavButton } from "./components/common";
 import { RecordModal, ScheduleModal, TransactionModal } from "./components/modals";
-import { CalendarView, DiaryView, LedgerView, RecordsView, SettingsView, StatsView, TodayView } from "./components/views";
+import { CalendarView, DiaryView, LedgerView, ProfileView, RecordsView, SettingsView, StatsView, TodayView } from "./components/views";
 import { dateKey, expenseCategories, newId, pad } from "./components/ui-helpers";
 
 const blankSchedule = (date: string, userId: string): Schedule => ({
@@ -315,11 +315,11 @@ export default function Home() {
       </nav>
       <div className="sidebar-bottom">
         <NavButton icon="⚙" label="설정" active={view === "settings"} onClick={() => setView("settings")} />
-        <div className="profile"><span>{data.user.name.slice(0, 1).toUpperCase()}</span><div><b>{data.user.name}</b><small>{data.user.email}</small></div></div>
+        <button className={`profile profile-button ${view === "profile" ? "active" : ""}`} onClick={() => setView("profile")}><span>{data.user.name.slice(0, 1).toUpperCase()}</span><div><b>{data.user.name}</b><small>{data.user.email}</small></div></button>
       </div>
     </aside>
 
-    <header className="mobile-topbar"><button className="mobile-brand" onClick={() => changeMobileView("today")} aria-label="온결 오늘 화면으로 이동"><BrandLogo /></button><button className="mobile-settings" aria-label="설정 열기" onClick={() => changeMobileView("settings")}>⚙</button></header>
+    <header className="mobile-topbar"><button className="mobile-brand" onClick={() => changeMobileView("today")} aria-label="온결 오늘 화면으로 이동"><BrandLogo /></button><button className={`mobile-profile ${view === "profile" ? "active" : ""}`} aria-label="프로필 열기" onClick={() => changeMobileView("profile")}><span>{data.user.name.slice(0, 1).toUpperCase()}</span></button></header>
 
     <main className={`content view-${view}`}>
       {view === "today" && <TodayView date={selectedDate} schedules={daySchedules} transactions={dayTransactions} diary={dayDiary} records={dayRecords} onAdd={() => setScheduleDraft(blankSchedule(selectedDate, data.user.id))} onEdit={setScheduleDraft} onMenu={setMenuId} menuId={menuId} onDelete={deleteSchedule} onStatus={updateStatus} onActual={editActualExpense} onDiary={() => setView("diary")} onRecords={() => setView("records")} />}
@@ -328,6 +328,7 @@ export default function Home() {
       {view === "stats" && <StatsView cursor={monthCursor} setCursor={setMonthCursor} data={data} />}
       {view === "records" && <RecordsView date={selectedDate} onDate={changeDate} records={dayRecords} schedules={daySchedules} onAdd={() => setRecordDraft(blankRecord(selectedDate, data.user.id))} onEdit={setRecordDraft} onDelete={deleteRecord} />}
       {view === "diary" && <DiaryView key={`${selectedDate}-${dayDiary?.id ?? "new"}`} date={selectedDate} onDate={changeDate} diary={dayDiary} schedules={daySchedules} transactions={dayTransactions} userId={data.user.id} onSave={saveDiary} onAddUnplanned={() => setScheduleDraft({ ...blankSchedule(selectedDate, data.user.id), status: "done" })} />}
+      {view === "profile" && <ProfileView data={data} setData={setData} onToast={setToast} onOpenSettings={() => setView("settings")} />}
       {view === "settings" && <SettingsView data={data} setData={setData} onToast={setToast} />}
     </main>
 

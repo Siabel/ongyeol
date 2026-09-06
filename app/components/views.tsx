@@ -221,6 +221,46 @@ export function DiaryView({ date, onDate, diary, schedules, transactions, userId
   </>;
 }
 
+function profileDate(value?: string) {
+  if (!value) return "기록 없음";
+  return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(new Date(value));
+}
+
+export function ProfileView({ data, setData, onToast, onOpenSettings }: { data: AppData; setData: (data: AppData) => void; onToast: (message: string) => void; onOpenSettings: () => void }) {
+  const [name, setName] = useState(data.user.name);
+  const [saving, setSaving] = useState(false);
+  const recordDates = new Set([
+    ...data.schedules.map((item) => item.date),
+    ...data.transactions.map((item) => item.date),
+    ...data.diaries.map((item) => item.date),
+    ...data.dailyRecords.map((item) => item.date),
+  ]);
+  const saveProfile = async (event: FormEvent) => {
+    event.preventDefault();
+    const displayName = name.trim();
+    if (!displayName) return onToast("이름을 입력해 주세요");
+    if (displayName.length > 30) return onToast("이름은 30자 이내로 입력해 주세요");
+    if (/[<>]/.test(displayName)) return onToast("이름에 사용할 수 없는 문자가 포함되어 있어요");
+    if (displayName === data.user.name) return onToast("변경된 이름이 없어요");
+    setSaving(true);
+    try {
+      const { error } = await getSupabase()!.auth.updateUser({ data: { display_name: displayName } });
+      if (error) return onToast(error.message);
+      setData({ ...data, user: { ...data.user, name: displayName } });
+      onToast("프로필 이름을 변경했어요");
+    } catch (error) {
+      onToast(error instanceof Error ? error.message : "프로필을 변경하지 못했어요");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return <><PageHeader eyebrow="나의 온결" title="프로필" /><div className="profile-layout">
+    <section className="profile-hero"><div className="profile-avatar" aria-hidden="true">{data.user.name.slice(0, 1).toUpperCase()}</div><span className="profile-badge">PERSONAL ARCHIVE</span><h2>{data.user.name}</h2><p>{data.user.email}</p><div className="profile-counts"><span><b>{data.schedules.length}</b>일정</span><span><b>{data.transactions.length}</b>거래</span><span><b>{data.diaries.length}</b>감정 일기</span><span><b>{data.dailyRecords.length}</b>하루 기록</span></div></section>
+    <div className="profile-details"><section className="profile-card"><div className="section-title"><div><h2>기본 정보</h2><span>기록에 표시되는 나의 이름</span></div></div><form className="profile-name-form" onSubmit={saveProfile}><label className="field"><span>이름</span><input value={name} maxLength={30} onChange={(event) => setName(event.target.value)} /></label><button className="primary" disabled={saving}>{saving ? "저장 중…" : "변경사항 저장"}</button></form><div className="profile-account"><span><small>로그인 이메일</small><b>{data.user.email}</b></span><span><small>온결을 시작한 날</small><b>{profileDate(data.user.createdAt)}</b></span><span><small>최근 로그인</small><b>{profileDate(data.user.lastSignInAt)}</b></span></div></section>
+    <section className="profile-card profile-history"><div><p>기록한 날짜</p><strong>{recordDates.size}<small>일</small></strong><span>일정, 소비, 감정과 작은 순간을 남긴 날이에요.</span></div><button className="ghost" onClick={onOpenSettings}>계정 및 보안 설정</button></section></div>
+  </div></>;
+}
 export function SettingsView({ data, setData, onToast }: { data: AppData; setData: (d: AppData) => void; onToast: (s: string) => void }) {
   const [hasLegacy, setHasLegacy] = useState(() => typeof window !== "undefined" && Boolean(localStorage.getItem(LEGACY_STORE_KEY)));
   const [email, setEmail] = useState(data.user.email);

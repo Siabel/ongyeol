@@ -265,3 +265,50 @@ body:before { opacity:.22; background-image:radial-gradient(circle at 8% 6%,rgba
 @media (prefers-reduced-motion:reduce) {
   .brand-orbit,.brand-thread,.brand-dot,.brand-copy { animation:none!important; stroke-dashoffset:0; }
 }
+/* Profile page */
+.mobile-profile { width:42px; height:42px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; background:rgba(255,253,248,.82); color:var(--green); cursor:pointer; }
+.mobile-profile span { width:32px; height:32px; display:grid; place-items:center; border-radius:50%; background:var(--green-soft); font:650 14px var(--serif); }
+.mobile-profile.active { border-color:var(--orange); box-shadow:0 0 0 3px rgba(199,126,94,.12); }
+.profile-button { width:calc(100% - 12px); margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:14px; background:#F7F8F5; text-align:left; cursor:pointer; }
+.profile-button.active { border-color:#CBDCD5; background:var(--green-soft); }
+.profile-layout { display:grid; grid-template-columns:minmax(280px,.72fr) minmax(0,1.28fr); gap:28px; align-items:start; }
+.profile-hero { position:relative; overflow:hidden; min-height:420px; padding:42px 34px 32px; border-radius:28px 28px 28px 9px; color:#F9F7F1; background:linear-gradient(155deg,#416D63,#294B45 62%,#203C36); box-shadow:0 22px 55px rgba(41,75,69,.18); }
+.profile-hero:after { content:""; position:absolute; width:260px; height:130px; right:-110px; top:86px; border:1px solid rgba(255,255,255,.15); border-radius:50%; transform:rotate(-28deg); }
+.profile-avatar { width:92px; height:92px; display:grid; place-items:center; margin-bottom:30px; border:1px solid rgba(255,255,255,.32); border-radius:31px 31px 31px 10px; background:rgba(255,255,255,.11); font:600 37px var(--serif); }
+.profile-badge { color:#E7C3A9; font-size:8px; font-weight:800; letter-spacing:.22em; }
+.profile-hero h2 { margin:11px 0 7px; font:600 31px var(--serif); }
+.profile-hero>p { margin:0; color:rgba(255,255,255,.62); font-size:11px; }
+.profile-counts { position:absolute; left:34px; right:34px; bottom:30px; display:grid; grid-template-columns:1fr 1fr; gap:1px; overflow:hidden; border:1px solid rgba(255,255,255,.12); border-radius:16px 16px 16px 5px; background:rgba(255,255,255,.12); }
+.profile-counts span { padding:14px; background:rgba(21,51,45,.38); color:rgba(255,255,255,.68); font-size:9px; }
+.profile-counts b { display:block; margin-bottom:4px; color:#fff; font:600 18px var(--serif); }
+.profile-details { display:flex; flex-direction:column; gap:18px; }
+.profile-card { padding:28px; border:1px solid var(--line); border-radius:22px 22px 22px 7px; background:rgba(255,255,255,.92); box-shadow:var(--shadow); }
+.profile-name-form { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:end; }
+.profile-name-form .field { margin:0; }
+.profile-name-form .primary:disabled { cursor:not-allowed; opacity:.55; }
+.profile-account { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:25px; padding-top:22px; border-top:1px solid var(--line); }
+.profile-account span { min-width:0; padding:13px; border-radius:12px; background:#F6F7F4; }
+.profile-account small { display:block; margin-bottom:7px; color:var(--muted); font-size:8px; }
+.profile-account b { display:block; overflow:hidden; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.profile-history { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.profile-history p { margin:0 0 5px; color:var(--orange); font-size:9px; font-weight:800; letter-spacing:.12em; }
+.profile-history strong { display:block; font:600 30px var(--serif); }
+.profile-history strong small { margin-left:3px; font-size:12px; }
+.profile-history span { display:block; margin-top:7px; color:var(--muted); font-size:10px; }
+
+@media (max-width:900px) {
+  .profile-layout { grid-template-columns:1fr; }
+  .profile-hero { min-height:360px; }
+}
+@media (max-width:760px) {
+  .profile-hero { min-height:330px; padding:28px 22px 22px; border-radius:24px 24px 24px 8px; }
+  .profile-avatar { width:72px; height:72px; margin-bottom:22px; border-radius:24px 24px 24px 8px; font-size:29px; }
+  .profile-hero h2 { font-size:27px; }
+  .profile-counts { left:22px; right:22px; bottom:22px; }
+  .profile-card { padding:22px 18px; }
+  .profile-name-form { grid-template-columns:1fr; }
+  .profile-name-form .primary { width:100%; }
+  .profile-account { grid-template-columns:1fr; }
+  .profile-history { align-items:stretch; flex-direction:column; }
+  .profile-history .ghost { width:100%; }
+}

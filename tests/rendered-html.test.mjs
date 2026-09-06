@@ -239,3 +239,19 @@ test("keeps mobile pages within the viewport and explains unsupported Android in
   assert.match(manager, /package=com\.android\.chrome/);
   assert.match(manager, /7일 동안 보지 않기/);
 });
+test("provides a separate profile page backed by Supabase user metadata", async () => {
+  const [page, views, types, dataLayer, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("lib/types.ts", root), "utf8"),
+    readFile(new URL("lib/haru-data.ts", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(types, /"profile"/);
+  assert.match(page, /프로필 열기/);
+  assert.match(page, /<ProfileView/);
+  assert.match(views, /function ProfileView/);
+  assert.match(views, /display_name: displayName/);
+  assert.match(dataLayer, /createdAt: user\.created_at/);
+  assert.match(styles, /\.profile-layout/);
+});

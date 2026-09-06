@@ -1,4 +1,4 @@
-export type View = "today" | "calendar" | "ledger" | "stats" | "records" | "diary" | "settings";
+export type View = "today" | "calendar" | "ledger" | "stats" | "records" | "diary" | "profile" | "settings";
 export type ScheduleStatus = "planned" | "done" | "partial" | "cancelled";
 export type TransactionType = "income" | "expense";
 export type RepeatFrequency = "yearly" | "monthly" | "weekly" | "daily";
@@ -8,6 +8,8 @@ export type AppUser = {
   id: string;
   name: string;
   email: string;
+  createdAt?: string;
+  lastSignInAt?: string;
 };
 
 export type Schedule = {

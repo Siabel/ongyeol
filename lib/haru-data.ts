@@ -35,6 +35,8 @@ export async function loadHaruData(user: User): Promise<AppData> {
     id: user.id,
     email: user.email ?? "",
     name: String(user.user_metadata?.display_name ?? user.email?.split("@")[0] ?? "나"),
+    createdAt: user.created_at,
+    lastSignInAt: user.last_sign_in_at,
   });
   data.schedules = (schedules.data ?? []).map((r) => ({
     id: r.id, userId: r.user_id, title: r.title, date: r.date, startTime: r.start_time?.slice(0, 5) ?? "",
