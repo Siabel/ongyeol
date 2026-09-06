@@ -321,7 +321,7 @@ export default function Home() {
 
     <header className="mobile-topbar"><button className="mobile-brand" onClick={() => changeMobileView("today")} aria-label="온결 오늘 화면으로 이동"><BrandLogo /></button><button className="mobile-settings" aria-label="설정 열기" onClick={() => changeMobileView("settings")}>⚙</button></header>
 
-    <main className="content">
+    <main className={`content view-${view}`}>
       {view === "today" && <TodayView date={selectedDate} schedules={daySchedules} transactions={dayTransactions} diary={dayDiary} records={dayRecords} onAdd={() => setScheduleDraft(blankSchedule(selectedDate, data.user.id))} onEdit={setScheduleDraft} onMenu={setMenuId} menuId={menuId} onDelete={deleteSchedule} onStatus={updateStatus} onActual={editActualExpense} onDiary={() => setView("diary")} onRecords={() => setView("records")} />}
       {view === "calendar" && <CalendarView cursor={monthCursor} setCursor={setMonthCursor} data={data} selectedDate={selectedDate} onSelect={changeDate} onAdd={(date) => setScheduleDraft(blankSchedule(date, data.user.id))} onEdit={setScheduleDraft} onDelete={deleteSchedule} />}
       {view === "ledger" && <LedgerView cursor={monthCursor} setCursor={setMonthCursor} transactions={monthTransactions} schedules={data.schedules.filter((s) => s.date.startsWith(monthKey))} income={income} expense={expense} expected={expected} onAdd={() => { setActualScheduleId(null); setTxDraft(blankTransaction(selectedDate, data.user.id)); }} onEdit={(transaction) => { setActualScheduleId(null); setTxDraft(transaction); }} onDelete={deleteTransaction} />}
@@ -334,7 +334,21 @@ export default function Home() {
     <div className="mobile-nav">
       <NavButton icon="⌂" label="오늘" active={view === "today"} onClick={() => { changeDate(dateKey()); changeMobileView("today"); }} />
       <NavButton icon="□" label="캘린더" active={view === "calendar"} onClick={() => changeMobileView("calendar")} />
-      <button className="mobile-add" aria-label="선택한 날짜에 일정 추가" onClick={() => { setMobileMenuOpen(false); setScheduleDraft(blankSchedule(selectedDate, data.user.id)); }}>＋</button>
+      <button
+        className="mobile-add"
+        aria-label={view === "ledger" ? "거래 추가" : view === "records" ? "하루 기록 추가" : "선택한 날짜에 일정 추가"}
+        onClick={() => {
+          setMobileMenuOpen(false);
+          if (view === "ledger") {
+            setActualScheduleId(null);
+            setTxDraft(blankTransaction(selectedDate, data.user.id));
+          } else if (view === "records") {
+            setRecordDraft(blankRecord(selectedDate, data.user.id));
+          } else {
+            setScheduleDraft(blankSchedule(selectedDate, data.user.id));
+          }
+        }}
+      >＋</button>
       <NavButton icon="₩" label="가계부" active={view === "ledger"} onClick={() => changeMobileView("ledger")} />
       <NavButton icon="•••" label="더보기" active={mobileMenuOpen || ["stats", "records", "diary", "settings"].includes(view)} onClick={() => setMobileMenuOpen((open) => !open)} />
     </div>
