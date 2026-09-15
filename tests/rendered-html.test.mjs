@@ -7,6 +7,7 @@ const uiSourcePaths = [
   "app/page.tsx",
   "app/components/auth-gate.tsx",
   "app/components/common.tsx",
+  "app/components/day-scheduler.tsx",
   "app/components/views.tsx",
   "app/components/modals.tsx",
   "app/components/ui-helpers.ts",
@@ -258,4 +259,21 @@ test("provides a separate profile page backed by Supabase user metadata", async 
   assert.match(dataLayer, /createdAt: user\.created_at/);
   assert.match(dataLayer, /realName: String\(user\.user_metadata\?\.real_name/);
   assert.match(styles, /\.profile-layout/);
+});
+
+test("adds a day planner that reuses schedule data", async () => {
+  const [page, views, scheduler, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("app/components/day-scheduler.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(views, /mode === "day"/);
+  assert.match(views, /<DayScheduler/);
+  assert.match(scheduler, /DAY PLANNER/);
+  assert.match(scheduler, /positionSchedules/);
+  assert.match(scheduler, /이 시간에 일정 추가/);
+  assert.match(page, /startTime: startTime \?\? "09:00"/);
+  assert.match(styles, /\.day-scheduler/);
+  assert.match(styles, /\.scheduler-event/);
 });

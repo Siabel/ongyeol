@@ -5,6 +5,7 @@ import { deleteMyAccount, loadHaruData, upsertDailyRecord, upsertDiary, upsertSc
 import { getSupabase } from "../../lib/supabase";
 import type { AppData, DailyRecord, EmotionDiary, Schedule, ScheduleStatus, Transaction } from "../../lib/types";
 import { DateNavigator, Empty, PageHeader } from "./common";
+import { DayScheduler } from "./day-scheduler";
 import { dateKey, displayDate, emotions, formatTime, koreanHolidays, mapHref, money, newId, pad, statusMap, strongestEmotion } from "./ui-helpers";
 
 const LEGACY_STORE_KEY = "one-day-diary-v1";
@@ -31,10 +32,11 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
   data: AppData;
   selectedDate: string;
   onSelect: (date: string) => void;
-  onAdd: (date: string) => void;
+  onAdd: (date: string, startTime?: string, endTime?: string) => void;
   onEdit: (schedule: Schedule) => void;
   onDelete: (id: string) => void;
 }) {
+  const [mode, setMode] = useState<"month" | "day">("month");
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const cells = [
@@ -48,18 +50,33 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
   const dayExpense = data.transactions
     .filter((transaction) => transaction.date === selectedDate && transaction.type === "expense")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const moveSelectedDate = (amount: number) => {
+    const next = new Date(`${selectedDate}T12:00:00`);
+    next.setDate(next.getDate() + amount);
+    onSelect(dateKey(next));
+  };
 
   return <>
     <PageHeader
-      eyebrow="한눈에 보는 기록"
-      title={`${year}년 ${month + 1}월`}
+      eyebrow={mode === "month" ? "한눈에 보는 기록" : "오늘을 설계하는 시간"}
+      title={mode === "month" ? `${year}년 ${month + 1}월` : "일간 스케줄러"}
       action={<div className="header-actions">
-        <button className="icon-button" onClick={() => setCursor(new Date(year, month - 1, 1))}>‹</button>
-        <button className="ghost" onClick={() => setCursor(new Date())}>이번 달</button>
-        <button className="icon-button" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
+        <div className="calendar-mode" aria-label="캘린더 보기 방식">
+          <button className={mode === "month" ? "active" : ""} onClick={() => setMode("month")}>월간</button>
+          <button className={mode === "day" ? "active" : ""} onClick={() => setMode("day")}>일간</button>
+        </div>
+        {mode === "month" ? <>
+          <button className="icon-button" aria-label="이전 달" onClick={() => setCursor(new Date(year, month - 1, 1))}>‹</button>
+          <button className="ghost" onClick={() => setCursor(new Date())}>이번 달</button>
+          <button className="icon-button" aria-label="다음 달" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
+        </> : <>
+          <button className="icon-button" aria-label="이전 날짜" onClick={() => moveSelectedDate(-1)}>‹</button>
+          <button className="ghost" onClick={() => onSelect(dateKey())}>오늘</button>
+          <button className="icon-button" aria-label="다음 날짜" onClick={() => moveSelectedDate(1)}>›</button>
+        </>}
       </div>}
     />
-    <div className="calendar-layout">
+    {mode === "day" ? <DayScheduler date={selectedDate} schedules={selectedSchedules} onAdd={onAdd} onEdit={onEdit} /> : <div className="calendar-layout">
       <section className="calendar-card">
         <div className="weekdays">{["일", "월", "화", "수", "목", "금", "토"].map((day) => <b key={day}>{day}</b>)}</div>
         <div className="calendar-grid">{cells.map((day, index) => {
@@ -102,7 +119,7 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
         </div>
         <button className="primary full" onClick={() => onAdd(selectedDate)}>＋ 이 날짜에 일정 추가</button>
       </aside>
-    </div>
+    </div>}
   </>;
 }
 
