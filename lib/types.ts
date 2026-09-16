@@ -1,4 +1,12 @@
-export type View = "today" | "calendar" | "ledger" | "stats" | "records" | "diary" | "profile" | "settings";
+export type View =
+  | "today"
+  | "calendar"
+  | "ledger"
+  | "stats"
+  | "records"
+  | "diary"
+  | "profile"
+  | "settings";
 export type ScheduleStatus = "planned" | "done" | "partial" | "cancelled";
 export type TransactionType = "income" | "expense";
 export type RepeatFrequency = "yearly" | "monthly" | "weekly" | "daily";
@@ -89,5 +97,12 @@ export type AppData = {
 };
 
 export function emptyAppData(user: AppUser): AppData {
-  return { version: 2, user, schedules: [], transactions: [], diaries: [], dailyRecords: [] };
+  return {
+    version: 2,
+    user,
+    schedules: [],
+    transactions: [],
+    diaries: [],
+    dailyRecords: [],
+  };
 }

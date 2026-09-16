@@ -1,0 +1,108 @@
+/* Text hierarchy and contrast. Small text stays neutral; coral marks emphasis. */
+.page-header p {
+  margin-bottom: 9px;
+  color: #56617f;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.015em;
+  line-height: 1.45;
+}
+
+.brand-name-row,
+.brand .brand-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.brand-copy em {
+  position: relative;
+  top: -1px;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.brand-copy small {
+  color: #697087;
+  font-size: 12px;
+}
+
+.nav-button {
+  color: #596177;
+  font-size: 14px;
+}
+
+.nav-button span {
+  color: #7b84a3;
+}
+
+.auth-story h2 {
+  max-width: 300px;
+  color: #fff;
+  font-size: clamp(25px, 2.4vw, 29px);
+  line-height: 1.42;
+  letter-spacing: -0.035em;
+  word-break: keep-all;
+  text-wrap: balance;
+}
+
+.auth-story > div p {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+
+.auth-story > div span {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.auth-story > small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+}
+
+.summary-strip small,
+.summary-strip p {
+  color: #5f6881;
+  opacity: 1;
+}
+
+.summary-strip small,
+.summary-strip p,
+.section-title span,
+.schedule-body p,
+.tx-mini small,
+.date-detail p,
+.detail-stat span {
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.section-title span,
+.schedule-body p,
+.schedule-body small,
+.tx-mini small,
+.muted,
+.profile small,
+.date-detail p,
+.detail-stat span {
+  color: var(--muted);
+}
+
+.reflection-card > p,
+.day-context > p,
+.modal-head p,
+.profile-history p {
+  min-height: 1em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.profile-account small,
+.profile-account b {
+  font-size: 11px;
+}

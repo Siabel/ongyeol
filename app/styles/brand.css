@@ -1,0 +1,111 @@
+/* Brand tokens and the blue-coral visual language. */
+:root {
+  --ink: #24283b;
+  --muted: #666d82;
+  --paper: #f7f8fc;
+  --card: #ffffff;
+  --line: #e2e5f0;
+  --green: #4658a6;
+  --green-soft: #edf0ff;
+  --orange: #e46e50;
+  --orange-ink: #a54631;
+  --orange-soft: #fff0eb;
+  --red: #b94f5d;
+  --blue: #5576b9;
+  --shadow: 0 12px 34px rgba(56, 67, 126, 0.07);
+}
+
+body:before {
+  opacity: 0.44;
+  background-image:
+    radial-gradient(circle at 8% 6%, rgba(228, 110, 80, 0.13), transparent 23%),
+    radial-gradient(
+      circle at 93% 90%,
+      rgba(70, 88, 166, 0.11),
+      transparent 27%
+    ),
+    linear-gradient(rgba(70, 88, 166, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(70, 88, 166, 0.025) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    28px 28px,
+    28px 28px;
+}
+
+::selection {
+  background: rgba(228, 110, 80, 0.24);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-color: rgba(228, 110, 80, 0.34);
+}
+
+.brand-step-three,
+.nav-button.active span {
+  color: var(--orange);
+  fill: var(--orange);
+}
+
+.brand-copy em,
+.sidebar .brand-copy em {
+  color: var(--orange-ink);
+}
+
+.primary,
+.file-button {
+  background: linear-gradient(135deg, #4658a6, #596dc4);
+  box-shadow: 0 8px 20px rgba(70, 88, 166, 0.22);
+}
+
+.primary:hover,
+.file-button:hover {
+  background: linear-gradient(135deg, #394a96, #4f61b5);
+}
+
+.summary-strip {
+  border-color: #dfe3f5;
+  background: linear-gradient(120deg, #eef1ff 0%, #f8f7ff 54%, #fff1ec 100%);
+}
+
+.auth-page {
+  background:
+    radial-gradient(circle at 6% 8%, rgba(228, 110, 80, 0.15), transparent 24%),
+    linear-gradient(140deg, #f3f4fb, #fafafe 55%, #eef0fb);
+}
+
+.auth-story {
+  background: linear-gradient(150deg, #5265b8, #3d4d94 70%, #34417c);
+}
+
+.auth-story > div p {
+  color: #ffd0c4;
+}
+
+.auth-card-mark {
+  color: var(--orange-ink);
+  border-color: #efb5a6;
+  background: var(--orange-soft);
+}
+
+.calendar-mode button.active,
+.mobile-nav .mobile-add {
+  border-color: var(--orange);
+  background: var(--orange);
+  color: #fff;
+}
+
+.day-cell.today .day-heading > span {
+  background: var(--orange);
+  color: #fff;
+}
+
+.profile-history p,
+.reflection-card > p,
+.day-context > p,
+.modal-head p {
+  color: var(--orange-ink);
+}

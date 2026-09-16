@@ -1,4 +1,4 @@
-const CACHE_VERSION = "ongyeol-shell-v1";
+const CACHE_VERSION = "jakda-shell-v1";
 const CORE_ASSETS = [
   "/",
   "/manifest.webmanifest",
@@ -34,7 +34,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("ongyeol-") && key !== CACHE_VERSION).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => (key.startsWith("jakda-") || key.startsWith("ongyeol-")) && key !== CACHE_VERSION).map((key) => caches.delete(key))))
       .then(() => self.clients.claim()),
   );
 });

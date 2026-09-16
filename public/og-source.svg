@@ -1,14 +1,43 @@
 <svg width="1792" height="937" viewBox="0 0 1792 937" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FAF9F5"/><stop offset="1" stop-color="#EDF3F0"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#435E56" flood-opacity=".1"/></filter></defs>
-  <rect width="1792" height="937" fill="url(#bg)"/><circle cx="80" cy="80" r="270" fill="#C77E5E" opacity=".06"/><circle cx="1740" cy="890" r="330" fill="#376158" opacity=".06"/>
-  <rect x="132" y="104" width="1528" height="729" rx="54" fill="#FFFFFF" stroke="#E4E5DF" stroke-width="2" filter="url(#s)"/>
-  <rect x="132" y="104" width="570" height="729" rx="54" fill="#EAF2EF"/><rect x="650" y="104" width="52" height="729" fill="#EAF2EF"/>
-  <g transform="translate(254 202) scale(2.15)"><path d="M37.5 15.2C33.7 8.6 24.9 6 17.7 9.4C10.4 12.8 7 21.3 9.8 28.8C12.7 36.5 21.2 40.6 29 38.2C33.4 36.8 36.7 33.7 38.4 29.8" fill="none" stroke="#376158" stroke-width="2.4" stroke-linecap="round"/><path d="M13.2 31.4C18.8 25.7 24.6 23.2 31.1 24.1C35 24.7 38.1 26.7 40.5 30" fill="none" stroke="#C77E5E" stroke-width="2.6" stroke-linecap="round"/><circle cx="39.8" cy="30.1" r="2.8" fill="#C77E5E"/></g>
-  <text x="254" y="397" fill="#C77E5E" font-family="Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="5">ONE FLOW, YOUR STORY</text>
-  <text x="254" y="500" fill="#2B302D" font-family="Malgun Gothic, sans-serif" font-size="64" font-weight="600">흩어진 하루를</text><text x="254" y="584" fill="#2B302D" font-family="Malgun Gothic, sans-serif" font-size="64" font-weight="600">하나의 결로.</text>
-  <text x="820" y="375" fill="#2B302D" font-family="Malgun Gothic, sans-serif" font-size="138" font-weight="700">온결</text>
-  <text x="828" y="477" fill="#59635E" font-family="Malgun Gothic, sans-serif" font-size="58" font-weight="500">삶의 결을 잇는 기록</text>
-  <line x1="828" y1="552" x2="1498" y2="552" stroke="#E4E5DF" stroke-width="2"/>
-  <text x="830" y="624" fill="#7A817D" font-family="Malgun Gothic, sans-serif" font-size="27">일정 · 감정 · 소비 · 작은 순간</text>
-  <path d="M832 692C943 650 1028 745 1147 696C1268 646 1375 737 1500 684" fill="none" stroke="#AFC3BC" stroke-width="4" stroke-linecap="round"/><circle cx="1500" cy="684" r="8" fill="#C77E5E"/>
+  <defs>
+    <linearGradient id="bg" x1="96" y1="40" x2="1690" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9FAFF"/>
+      <stop offset="1" stop-color="#EEF1FF"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="196" y1="146" x2="722" y2="821" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#586CC1"/>
+      <stop offset="1" stop-color="#3C4B91"/>
+    </linearGradient>
+    <filter id="shadow" x="68" y="50" width="1656" height="837" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#354382" flood-opacity=".14"/>
+    </filter>
+  </defs>
+  <rect width="1792" height="937" fill="url(#bg)"/>
+  <circle cx="1680" cy="72" r="220" fill="#FF795C" opacity=".08"/>
+  <circle cx="120" cy="880" r="270" fill="#4658A6" opacity=".07"/>
+  <g filter="url(#shadow)">
+    <rect x="124" y="96" width="1544" height="745" rx="56" fill="#FFFFFF"/>
+    <path d="M124 152C124 121.072 149.072 96 180 96H706V841H180C149.072 841 124 815.928 124 785V152Z" fill="url(#panel)"/>
+  </g>
+  <g transform="translate(226 202) scale(2.65)">
+    <rect x="3" y="3" width="42" height="42" rx="14" fill="#FFFFFF" fill-opacity=".12" stroke="#FFFFFF" stroke-width="1.6"/>
+    <path d="M12 34.5H20V25.5H28V16.5H36" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".25"/>
+    <rect x="10" y="30" width="9" height="9" rx="3" fill="#FFFFFF"/>
+    <rect x="20" y="21" width="9" height="9" rx="3" fill="#FFFFFF"/>
+    <rect x="30" y="12" width="9" height="9" rx="3" fill="#FF9A82"/>
+  </g>
+  <text x="226" y="410" fill="#FFB19D" font-family="Arial, sans-serif" font-size="19" font-weight="800" letter-spacing="5">ONE SMALL NEXT</text>
+  <text x="226" y="518" fill="#FFFFFF" font-family="Malgun Gothic, sans-serif" font-size="64" font-weight="700">오늘의 한 칸이</text>
+  <text x="226" y="602" fill="#FFFFFF" font-family="Malgun Gothic, sans-serif" font-size="64" font-weight="700">다음을 만들어요.</text>
+  <text x="814" y="368" fill="#24283B" font-family="Malgun Gothic, sans-serif" font-size="142" font-weight="800">작다</text>
+  <text x="827" y="435" fill="#FF795C" font-family="Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="7">JAKDA · 작은다음</text>
+  <text x="820" y="536" fill="#596078" font-family="Malgun Gothic, sans-serif" font-size="52" font-weight="600">작은 다음을 기록하다</text>
+  <line x1="822" y1="600" x2="1494" y2="600" stroke="#E2E5F0" stroke-width="2"/>
+  <text x="824" y="676" fill="#7A8094" font-family="Malgun Gothic, sans-serif" font-size="28">일정 · 감정 · 소비 · 작은 순간</text>
+  <g transform="translate(1258 706)">
+    <path d="M0 56H62V0H124V-56H186" fill="none" stroke="#4658A6" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".18"/>
+    <rect x="-8" y="42" width="28" height="28" rx="9" fill="#4658A6"/>
+    <rect x="54" y="-14" width="28" height="28" rx="9" fill="#4658A6"/>
+    <rect x="116" y="-70" width="28" height="28" rx="9" fill="#FF795C"/>
+  </g>
 </svg>

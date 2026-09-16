@@ -25,5 +25,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "db", "worker"]
+  "exclude": ["node_modules", "dist", ".next", ".vinext", ".vercel"]
 }

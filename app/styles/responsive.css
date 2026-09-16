@@ -1,0 +1,30 @@
+/* Small-screen refinements kept separate from desktop presentation. */
+@media (max-width: 760px) {
+  .auth-story {
+    min-height: 188px;
+  }
+
+  .auth-story h2 {
+    max-width: 260px;
+    font-size: 23px;
+  }
+
+  .page-header p {
+    font-size: 12px;
+  }
+
+  .summary-strip {
+    background: linear-gradient(145deg, #eef1ff, #fff2ed);
+  }
+
+  .mobile-brand .brand-copy em {
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-step,
+  .brand-copy {
+    animation: none !important;
+  }
+}
