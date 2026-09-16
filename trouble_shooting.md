@@ -233,13 +233,15 @@ HMR은 빠른 피드백에는 유리하지만 대규모 파일 이동 중간 상
 
 ### 해결
 
-- 운영 전용 `release` 브랜치를 만들고 Vercel의 Production Branch를 `release`로 지정한다.
+- 운영 전용 `release` 브랜치를 만들고 Vercel의 Production Branch를 `release`로 지정했다.
 - 기능과 오류 수정은 별도 브랜치에서 검증한 뒤에만 `release`에 반영한다.
 - `master`에 푸시해도 운영 배포가 발생하지 않도록 역할을 분리한다.
 
 ### 검증
 
-- `release` 브랜치의 커밋으로 생성된 배포가 Ready 상태인지 확인한다.
+- Vercel 설정을 다시 열어 Production Branch가 `release`로 유지되는 것을 확인했다.
+- `release`의 초기 커밋 `168dca9`로 생성된 Preview 배포가 Ready 상태인 것을 확인했다.
+- 설정 완료 후 새 문서 커밋을 푸시해 자동 Production 배포가 시작되는지 확인한다.
 - `https://jakda.vercel.app`에서 작은다음 브랜드와 최신 기능이 표시되는지 확인한다.
 
 ### 배운 점
