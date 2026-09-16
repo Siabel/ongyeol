@@ -92,7 +92,7 @@ export function DayScheduler({ date, schedules, onAdd, onEdit }: {
 
   return <section className="day-scheduler">
     <div className="scheduler-intro">
-      <div><p>DAY PLANNER</p><h2>{displayDate(date, true)}</h2><span>계획한 시간을 실제 하루의 기록으로 이어보세요.</span></div>
+      <div><p>DAY PLANNER</p><h2>{displayDate(date, true)}</h2></div>
       <button className="primary" onClick={() => onAdd(date)}>＋ 일정 추가</button>
     </div>
     <div className="scheduler-summary" aria-label="선택한 날짜의 일정 요약">
@@ -108,7 +108,7 @@ export function DayScheduler({ date, schedules, onAdd, onEdit }: {
             className="scheduler-hour"
             key={hour}
             style={{ height: `${HOUR_HEIGHT}px` }}
-            onClick={() => onAdd(date, timeAt(hour), hour === 23 ? "23:59" : timeAt(hour + 1))}
+            onClick={() => onAdd(date, timeAt(hour), hour === 23 ? "23:50" : timeAt(hour + 1))}
             aria-label={`${timeAt(hour)}에 일정 추가`}
           ><time>{timeAt(hour)}</time><span>이 시간에 일정 추가</span></button>)}
         </div>

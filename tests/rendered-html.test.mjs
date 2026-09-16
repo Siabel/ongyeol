@@ -277,3 +277,17 @@ test("adds a day planner that reuses schedule data", async () => {
   assert.match(styles, /\.day-scheduler/);
   assert.match(styles, /\.scheduler-event/);
 });
+
+test("prevents duplicate schedule submissions and invalid time ranges", async () => {
+  const [page, modals, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/modals.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(page, /scheduleSaveLock\.current/);
+  assert.match(page, /selectedEndTime <= selectedStartTime/);
+  assert.match(modals, /invalidTimeRange/);
+  assert.match(modals, /\[0, 10, 20, 30, 40, 50, minuteValue\]/);
+  assert.match(modals, /disabled=\{invalidTimeRange \|\| saving\}/);
+  assert.match(styles, /\.sidebar-collapsed \.brand-copy \{ display:none!important; \}/);
+});

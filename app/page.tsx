@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   loadHaruData, removeDailyRecord, removeSchedule, removeTransaction,
   upsertDailyRecord, upsertDiary, upsertSchedule, upsertTransaction,
@@ -50,6 +50,8 @@ export default function Home() {
   const [editScheduleSeries, setEditScheduleSeries] = useState(false);
   const [editTransactionSeries, setEditTransactionSeries] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const scheduleSaveLock = useRef(false);
 
   useEffect(() => {
     const client = getSupabase();
@@ -108,7 +110,15 @@ export default function Home() {
 
   const saveSchedule = async (event: FormEvent) => {
     event.preventDefault();
-    if (!scheduleDraft?.title.trim() || !data) return;
+    if (!scheduleDraft?.title.trim() || !data || scheduleSaveLock.current) return;
+    const selectedStartTime = completingScheduleId === scheduleDraft.id ? scheduleDraft.actualStartTime : scheduleDraft.startTime;
+    const selectedEndTime = completingScheduleId === scheduleDraft.id ? scheduleDraft.actualEndTime : scheduleDraft.endTime;
+    if (!selectedStartTime || !selectedEndTime || selectedEndTime <= selectedStartTime) {
+      setToast("종료 시간은 시작 시간보다 늦어야 해요");
+      return;
+    }
+    scheduleSaveLock.current = true;
+    setSavingSchedule(true);
     const item = { ...scheduleDraft, id: scheduleDraft.id || newId(), userId: data.user.id, expectedCost: Number(scheduleDraft.expectedCost) || 0 };
     try {
       if (completingScheduleId === item.id) {
@@ -161,6 +171,10 @@ export default function Home() {
       setCompletingScheduleId(null);
       setToast(completingScheduleId === item.id ? "실제 일정을 확인하고 완료했어요" : scheduleDraft.id ? "일정을 수정했어요" : "새 일정을 추가했어요");
     } catch (error) { notifyError(error); }
+    finally {
+      scheduleSaveLock.current = false;
+      setSavingSchedule(false);
+    }
   };
   const deleteSchedule = async (id: string) => {
     try {
@@ -309,9 +323,9 @@ export default function Home() {
         <NavButton icon="⌂" label="오늘" active={view === "today"} onClick={() => { changeDate(dateKey()); setView("today"); }} />
         <NavButton icon="□" label="캘린더" active={view === "calendar"} onClick={() => setView("calendar")} />
         <NavButton icon="₩" label="가계부" active={view === "ledger"} onClick={() => setView("ledger")} />
-        <NavButton icon="▥" label="통계" active={view === "stats"} onClick={() => setView("stats")} />
         <NavButton icon="✎" label="하루 기록" active={view === "records"} onClick={() => setView("records")} />
         <NavButton icon="♡" label="감정 일기" active={view === "diary"} onClick={() => setView("diary")} />
+        <NavButton icon="▥" label="통계" active={view === "stats"} onClick={() => setView("stats")} />
       </nav>
       <div className="sidebar-bottom">
         <NavButton icon="⚙" label="설정" active={view === "settings"} onClick={() => setView("settings")} />
@@ -356,7 +370,7 @@ export default function Home() {
 
     {mobileMenuOpen && <dialog open className="mobile-more-backdrop" aria-label="더보기 메뉴"><section className="mobile-more-sheet"><div><b>더보기</b><button aria-label="더보기 메뉴 닫기" onClick={() => setMobileMenuOpen(false)}>×</button></div><button onClick={() => changeMobileView("records")}><span>✎</span><b>하루 기록</b><small>작은 순간을 자유롭게 기록</small></button><button onClick={() => changeMobileView("diary")}><span>♡</span><b>감정 일기</b><small>하루의 감정과 강도 돌아보기</small></button><button onClick={() => changeMobileView("stats")}><span>▥</span><b>통계</b><small>일정, 지출, 감정 흐름 확인</small></button><button onClick={() => changeMobileView("settings")}><span>⚙</span><b>설정</b><small>계정과 데이터 관리</small></button></section></dialog>}
 
-    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} onClose={closeScheduleModal} onSubmit={saveSchedule} />}
+    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} saving={savingSchedule} onClose={closeScheduleModal} onSubmit={saveSchedule} />}
     {txDraft && <TransactionModal draft={txDraft} setDraft={setTxDraft} schedules={data.schedules.filter((s) => s.date === txDraft.date)} lockedScheduleId={actualScheduleId} editSeries={editTransactionSeries} setEditSeries={setEditTransactionSeries} onClose={closeTransactionModal} onSubmit={saveTransaction} />}
     {recordDraft && <RecordModal draft={recordDraft} setDraft={setRecordDraft} schedules={data.schedules.filter((s) => s.date === recordDraft.date)} onClose={() => setRecordDraft(null)} onSubmit={saveRecord} />}
     {toast && <div className="toast">{toast}</div>}
