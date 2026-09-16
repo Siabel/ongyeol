@@ -54,6 +54,9 @@ test("uses the Jakda brand across UI, metadata, and PWA assets", async () => {
   assert.match(manifest, /short_name: "작다"/);
   assert.match(theme, /Brand tokens/);
   assert.match(theme, /Text hierarchy and contrast/);
+  assert.match(theme, /--orange: #e87932/);
+  assert.match(theme, /\.auth-story \.brand-copy em/);
+  assert.match(theme, /color: #ffd19f/);
   assert.match(favicon, /#4658A6/);
 });
 test("includes account, place, and daily-record flows", async () => {

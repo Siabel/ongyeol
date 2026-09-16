@@ -1,4 +1,4 @@
-/* Brand tokens and the blue-coral visual language. */
+/* Brand tokens and the blue-orange visual language. */
 :root {
   --ink: #24283b;
   --muted: #666d82;
@@ -7,9 +7,9 @@
   --line: #e2e5f0;
   --green: #4658a6;
   --green-soft: #edf0ff;
-  --orange: #e46e50;
-  --orange-ink: #a54631;
-  --orange-soft: #fff0eb;
+  --orange: #e87932;
+  --orange-ink: #a64b17;
+  --orange-soft: #fff3e8;
   --red: #b94f5d;
   --blue: #5576b9;
   --shadow: 0 12px 34px rgba(56, 67, 126, 0.07);
@@ -18,7 +18,7 @@
 body:before {
   opacity: 0.44;
   background-image:
-    radial-gradient(circle at 8% 6%, rgba(228, 110, 80, 0.13), transparent 23%),
+    radial-gradient(circle at 8% 6%, rgba(232, 121, 50, 0.12), transparent 23%),
     radial-gradient(
       circle at 93% 90%,
       rgba(70, 88, 166, 0.11),
@@ -34,14 +34,14 @@ body:before {
 }
 
 ::selection {
-  background: rgba(228, 110, 80, 0.24);
+  background: rgba(232, 121, 50, 0.24);
 }
 
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline-color: rgba(228, 110, 80, 0.34);
+  outline-color: rgba(232, 121, 50, 0.38);
 }
 
 .brand-step-three,
@@ -73,7 +73,7 @@ select:focus-visible {
 
 .auth-page {
   background:
-    radial-gradient(circle at 6% 8%, rgba(228, 110, 80, 0.15), transparent 24%),
+    radial-gradient(circle at 6% 8%, rgba(232, 121, 50, 0.14), transparent 24%),
     linear-gradient(140deg, #f3f4fb, #fafafe 55%, #eef0fb);
 }
 
@@ -82,7 +82,14 @@ select:focus-visible {
 }
 
 .auth-story > div p {
-  color: #ffd0c4;
+  color: #ffd8ad;
+}
+
+.auth-story .brand-copy em {
+  color: #ffd19f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
 }
 
 .auth-card-mark {
