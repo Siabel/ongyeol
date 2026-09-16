@@ -86,7 +86,7 @@ export function TimePicker({ label, value, onChange }: { label: string; value: s
   </div>;
 }
 
-export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpense, editSeries, setEditSeries, saving, onClose, onSubmit }: { draft: Schedule; setDraft: (s: Schedule) => void; completionMode: boolean; hasActualExpense: boolean; editSeries: boolean; setEditSeries: (value: boolean) => void; saving: boolean; onClose: () => void; onSubmit: (e: FormEvent) => void }) {
+export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpense, editSeries, setEditSeries, saving, onClose, onDelete, onSubmit }: { draft: Schedule; setDraft: (s: Schedule) => void; completionMode: boolean; hasActualExpense: boolean; editSeries: boolean; setEditSeries: (value: boolean) => void; saving: boolean; onClose: () => void; onDelete?: () => void; onSubmit: (e: FormEvent) => void }) {
   const selectedStartTime = completionMode ? draft.actualStartTime : draft.startTime;
   const selectedEndTime = completionMode ? draft.actualEndTime : draft.endTime;
   const invalidTimeRange = Boolean(selectedStartTime && selectedEndTime && selectedEndTime <= selectedStartTime);
@@ -112,7 +112,7 @@ export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpens
       {!completionMode && <div className="fixed-section full-span schedule-repeat"><label className="check-field fixed-check"><input type="checkbox" checked={draft.isRecurring} onChange={(event) => setRecurring(event.target.checked)} /> 반복 일정</label>{draft.isRecurring && <div className="repeat-settings"><span>반복 주기</span><div className="repeat-frequency">{([['daily', '매일'], ['weekly', '매주'], ['monthly', '매월'], ['yearly', '매년']] as const).map(([value, label]) => <button type="button" key={value} className={draft.repeatFrequency === value ? "active" : ""} onClick={() => setDraft({ ...draft, repeatFrequency: value })}>{label}</button>)}</div><label className="field repeat-end"><span>반복 종료일</span><input type="date" required value={draft.repeatEndDate ?? ""} min={draft.date} onChange={(event) => setDraft({ ...draft, repeatEndDate: event.target.value })} /></label>{draft.seriesId && <label className="check-field series-check"><input type="checkbox" checked={editSeries} onChange={(event) => setEditSeries(event.target.checked)} /> 이 회차 이후 반복 일정 전체 수정</label>}</div>}</div>}
       <label className="field full-span"><span>메모</span><textarea rows={3} value={draft.memo} onChange={(event) => setDraft({ ...draft, memo: event.target.value })} /></label>
     </div>
-    <div className="modal-actions"><button type="button" className="ghost" onClick={onClose}>취소</button><button className="primary" disabled={invalidTimeRange || saving}>{saving ? "저장 중…" : completionMode && (draft.expectedCost > 0 || hasActualExpense) ? "다음: 실제 지출" : completionMode ? "완료로 변경" : "저장"}</button></div>
+    <div className="modal-actions">{onDelete && <button type="button" className="modal-delete" disabled={saving} onClick={onDelete}>일정 삭제</button>}<button type="button" className="ghost" onClick={onClose}>취소</button><button className="primary" disabled={invalidTimeRange || saving}>{saving ? "저장 중…" : completionMode && (draft.expectedCost > 0 || hasActualExpense) ? "다음: 실제 지출" : completionMode ? "완료로 변경" : "저장"}</button></div>
   </form></div>;
 }
 

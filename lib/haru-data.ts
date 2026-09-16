@@ -12,6 +12,11 @@ const throwIfError = (error: { message: string } | null) => {
   if (error) throw new Error(error.message);
 };
 
+const jwtFutureError = (error: { code?: string; message?: string } | null) =>
+  Boolean(error && (error.code === "PGRST303" || /jwt issued at future/i.test(error.message ?? "")));
+
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
 function diaryEmotions(row: Record<string, unknown>): EmotionEntry[] {
   if (Array.isArray(row.emotions) && row.emotions.length > 0) {
     return row.emotions
@@ -23,12 +28,23 @@ function diaryEmotions(row: Record<string, unknown>): EmotionEntry[] {
 
 export async function loadHaruData(user: User): Promise<AppData> {
   const client = db();
-  const [schedules, transactions, diaries, records] = await Promise.all([
+  const loadTables = () => Promise.all([
     client.from("schedules").select("*").order("date").order("start_time"),
     client.from("transactions").select("*").order("date", { ascending: false }),
     client.from("emotion_diaries").select("*").order("date", { ascending: false }),
     client.from("daily_records").select("*").order("date", { ascending: false }).order("record_time", { ascending: false }),
   ]);
+  const retryDelays = [800, 1800, 3500, 6500];
+  let result = await loadTables();
+  for (const delay of retryDelays) {
+    if (!result.some(({ error }) => jwtFutureError(error))) break;
+    await wait(delay);
+    result = await loadTables();
+  }
+  const [schedules, transactions, diaries, records] = result;
+  if (result.some(({ error }) => jwtFutureError(error))) {
+    throw new Error("로그인 정보의 시간 동기화가 지연되고 있어요. 잠시 후 다시 연결해 주세요.");
+  }
   [schedules, transactions, diaries, records].forEach(({ error }) => throwIfError(error));
 
   const data = emptyAppData({

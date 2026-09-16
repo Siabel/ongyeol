@@ -51,6 +51,7 @@ export default function Home() {
   const [editTransactionSeries, setEditTransactionSeries] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [dataLoadRevision, setDataLoadRevision] = useState(0);
   const scheduleSaveLock = useRef(false);
 
   useEffect(() => {
@@ -74,10 +75,11 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     let alive = true;
+    setLoadError("");
     loadHaruData(user).then((next) => { if (alive) { setData(next); setLoadError(""); } })
-      .catch((error: Error) => { if (alive) setLoadError(error.message); })
+      .catch((error: Error) => { if (alive) setLoadError(error.message); });
     return () => { alive = false; };
-  }, [user]);
+  }, [user, dataLoadRevision]);
 
   useEffect(() => {
     if (!toast) return;
@@ -181,7 +183,11 @@ export default function Home() {
       await removeSchedule(id);
       setData((prev) => prev && ({ ...prev, schedules: prev.schedules.filter((s) => s.id !== id), transactions: prev.transactions.map((t) => t.scheduleId === id ? { ...t, scheduleId: undefined } : t), dailyRecords: prev.dailyRecords.map((r) => r.scheduleId === id ? { ...r, scheduleId: undefined } : r) }));
       setMenuId(null); setToast("일정을 삭제했어요. 실제 거래와 하루 기록은 유지돼요");
-    } catch (error) { notifyError(error); }
+      return true;
+    } catch (error) {
+      notifyError(error);
+      return false;
+    }
   };
   const updateStatus = async (schedule: Schedule, status: ScheduleStatus) => {
     if (status === "done") {
@@ -301,6 +307,10 @@ export default function Home() {
     setCompletingScheduleId(null);
     setEditScheduleSeries(false);
   };
+  const deleteScheduleFromModal = async () => {
+    if (!scheduleDraft?.id || !window.confirm(`“${scheduleDraft.title}” 일정을 삭제할까요?\n연결된 실제 거래와 하루 기록은 유지됩니다.`)) return;
+    if (await deleteSchedule(scheduleDraft.id)) closeScheduleModal();
+  };
   const closeTransactionModal = () => {
     setTxDraft(null);
     setPendingCompletion(null);
@@ -312,7 +322,7 @@ export default function Home() {
   if (!isSupabaseConfigured) return <SetupRequired />;
   if (loading) return <main className="loading"><BrandLogo /><span>기록의 결을 펼치는 중…</span></main>;
   if (!user) return <AuthGate />;
-  if (loadError) return <main className="loading error-state"><b>데이터를 불러오지 못했어요</b><span>{loadError}</span><button className="primary" onClick={() => location.reload()}>다시 시도</button></main>;
+  if (loadError) return <main className="loading error-state"><b>데이터 연결이 잠시 지연되고 있어요</b><span>{loadError}</span><button className="primary" onClick={() => setDataLoadRevision((revision) => revision + 1)}>다시 연결</button></main>;
   if (!data) return <main className="loading">내 기록을 불러오는 중…</main>;
 
   return <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -370,7 +380,7 @@ export default function Home() {
 
     {mobileMenuOpen && <dialog open className="mobile-more-backdrop" aria-label="더보기 메뉴"><section className="mobile-more-sheet"><div><b>더보기</b><button aria-label="더보기 메뉴 닫기" onClick={() => setMobileMenuOpen(false)}>×</button></div><button onClick={() => changeMobileView("records")}><span>✎</span><b>하루 기록</b><small>작은 순간을 자유롭게 기록</small></button><button onClick={() => changeMobileView("diary")}><span>♡</span><b>감정 일기</b><small>하루의 감정과 강도 돌아보기</small></button><button onClick={() => changeMobileView("stats")}><span>▥</span><b>통계</b><small>일정, 지출, 감정 흐름 확인</small></button><button onClick={() => changeMobileView("settings")}><span>⚙</span><b>설정</b><small>계정과 데이터 관리</small></button></section></dialog>}
 
-    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} saving={savingSchedule} onClose={closeScheduleModal} onSubmit={saveSchedule} />}
+    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} saving={savingSchedule} onClose={closeScheduleModal} onDelete={scheduleDraft.id && completingScheduleId !== scheduleDraft.id ? deleteScheduleFromModal : undefined} onSubmit={saveSchedule} />}
     {txDraft && <TransactionModal draft={txDraft} setDraft={setTxDraft} schedules={data.schedules.filter((s) => s.date === txDraft.date)} lockedScheduleId={actualScheduleId} editSeries={editTransactionSeries} setEditSeries={setEditTransactionSeries} onClose={closeTransactionModal} onSubmit={saveTransaction} />}
     {recordDraft && <RecordModal draft={recordDraft} setDraft={setRecordDraft} schedules={data.schedules.filter((s) => s.date === recordDraft.date)} onClose={() => setRecordDraft(null)} onSubmit={saveRecord} />}
     {toast && <div className="toast">{toast}</div>}

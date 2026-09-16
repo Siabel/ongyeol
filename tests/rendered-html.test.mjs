@@ -291,3 +291,32 @@ test("prevents duplicate schedule submissions and invalid time ranges", async ()
   assert.match(modals, /disabled=\{invalidTimeRange \|\| saving\}/);
   assert.match(styles, /\.sidebar-collapsed \.brand-copy \{ display:none!important; \}/);
 });
+
+test("keeps schedule deletion reachable from edit and today menus", async () => {
+  const [page, views, modals, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("app/components/modals.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(page, /deleteScheduleFromModal/);
+  assert.match(page, /onDelete=\{scheduleDraft\.id/);
+  assert.match(modals, /className="modal-delete"/);
+  assert.match(views, /menu-open/);
+  assert.match(views, /aria-expanded=\{menuId === s\.id\}/);
+  assert.match(styles, /\.schedule-card\.menu-open/);
+  assert.match(styles, /\.context-menu \{ z-index:30; top:-8px/);
+  assert.match(styles, /\.sidebar:after \{ display:none; \}/);
+});
+
+test("retries the transient Supabase JWT clock error before showing a friendly recovery state", async () => {
+  const [page, dataLayer] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("lib/haru-data.ts", root), "utf8"),
+  ]);
+  assert.match(dataLayer, /PGRST303/);
+  assert.match(dataLayer, /jwt issued at future/i);
+  assert.match(dataLayer, /retryDelays = \[800, 1800, 3500, 6500\]/);
+  assert.match(page, /dataLoadRevision/);
+  assert.match(page, /다시 연결/);
+});
