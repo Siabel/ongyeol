@@ -151,6 +151,8 @@ test("keeps calendar cells fixed and supports server-side place search", async (
   assert.ok(compact(styles).includes("text-overflow:ellipsis"));
   assert.match(route, /local\/search\/keyword\.json/);
   assert.match(route, /KAKAO_REST_API_KEY/);
+  assert.match(route, /Kakao Local API request failed/);
+  assert.match(route, /호출 허용 IP 설정/);
   assert.match(envExample, /KAKAO_REST_API_KEY/);
 });
 
