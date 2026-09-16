@@ -5,6 +5,7 @@ import { deleteMyAccount, loadHaruData, upsertDailyRecord, upsertDiary, upsertSc
 import { getSupabase } from "../../lib/supabase";
 import type { AppData, DailyRecord, EmotionDiary, Schedule, ScheduleStatus, Transaction } from "../../lib/types";
 import { DateNavigator, Empty, PageHeader } from "./common";
+import { DayScheduler } from "./day-scheduler";
 import { dateKey, displayDate, emotions, formatTime, koreanHolidays, mapHref, money, newId, pad, statusMap, strongestEmotion } from "./ui-helpers";
 
 const LEGACY_STORE_KEY = "one-day-diary-v1";
@@ -19,7 +20,7 @@ export function TodayView({ date, schedules, transactions, diary, records, onAdd
       {schedules.map((s) => {
         const actual = transactions.find((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === s.id);
         const shownTime = s.status === "done" && s.actualStartTime ? s.actualStartTime : s.startTime;
-        return <article className={`schedule-card ${s.status}`} key={s.id}><time>{formatTime(shownTime)}</time><div className="time-line"><i /></div><div className="schedule-body"><div className="schedule-top"><span className={`status ${s.status}`}>{statusMap[s.status]}</span><button className="more" onClick={() => onMenu(menuId === s.id ? null : s.id)}>•••</button></div><h3>{s.title}</h3><p>{[s.place && `⌖ ${s.place}`, s.people && `◌ ${s.people}`].filter(Boolean).join(" · ") || s.memo || "세부 정보 없음"}</p>{s.status === "done" && s.actualDate && <small className="actual-schedule-meta">실제 {displayDate(s.actualDate)} · {formatTime(s.actualStartTime)}–{formatTime(s.actualEndTime)}</small>}{mapHref(s) && <a className="map-link" href={mapHref(s)} target="_blank" rel="noreferrer">지도에서 보기 ↗</a>}<div className="cost-row"><span>{actual ? `예상 ${money(s.expectedCost)} · 실제 ${money(actual.amount)}` : `예상 ${money(s.expectedCost)}`}</span><button onClick={() => onActual(s)}>{actual ? "실제 지출 수정" : "실제 지출 입력"}</button></div>{menuId === s.id && <div className="context-menu"><button onClick={() => onStatus(s, "done")}>✓ 완료</button><button onClick={() => onStatus(s, "partial")}>◐ 일부 완료</button><button onClick={() => onStatus(s, "cancelled")}>× 취소</button><button onClick={() => onEdit(s)}>수정</button><button className="danger" onClick={() => onDelete(s.id)}>삭제</button></div>}</div></article>;
+        return <article className={`schedule-card ${s.status} ${menuId === s.id ? "menu-open" : ""}`} key={s.id}><time>{formatTime(shownTime)}</time><div className="time-line"><i /></div><div className="schedule-body"><div className="schedule-top"><span className={`status ${s.status}`}>{statusMap[s.status]}</span><button className="more" aria-label={`${s.title} 일정 메뉴`} aria-expanded={menuId === s.id} onClick={() => onMenu(menuId === s.id ? null : s.id)}>•••</button></div><h3>{s.title}</h3><p>{[s.place && `⌖ ${s.place}`, s.people && `◌ ${s.people}`].filter(Boolean).join(" · ") || s.memo || "세부 정보 없음"}</p>{s.status === "done" && s.actualDate && <small className="actual-schedule-meta">실제 {displayDate(s.actualDate)} · {formatTime(s.actualStartTime)}–{formatTime(s.actualEndTime)}</small>}{mapHref(s) && <a className="map-link" href={mapHref(s)} target="_blank" rel="noreferrer">지도에서 보기 ↗</a>}<div className="cost-row"><span>{actual ? `예상 ${money(s.expectedCost)} · 실제 ${money(actual.amount)}` : `예상 ${money(s.expectedCost)}`}</span><button onClick={() => onActual(s)}>{actual ? "실제 지출 수정" : "실제 지출 입력"}</button></div>{menuId === s.id && <div className="context-menu"><button onClick={() => onStatus(s, "done")}>✓ 완료</button><button onClick={() => onStatus(s, "partial")}>◐ 일부 완료</button><button onClick={() => onStatus(s, "cancelled")}>× 취소</button><button onClick={() => onEdit(s)}>수정</button><button className="danger" onClick={() => onDelete(s.id)}>삭제</button></div>}</div></article>;
       })}
     </div></section><aside className="right-panel"><section className="reflection-card"><p>DAILY RECORD</p><h2>{records[0]?.title ?? "오늘의 작은 순간"}</h2><blockquote>{records[0]?.content ?? "큰 일정 사이에 있었던 생각과 순간도 자유롭게 남겨보세요."}</blockquote><button onClick={onRecords}>{records.length ? `기록 ${records.length}개 보기` : "하루 기록 쓰기"}<span>→</span></button></section><section className="mini-ledger"><div className="section-title"><div><h2>오늘의 지출</h2><span>일정과 연결된 소비</span></div></div>{transactions.length === 0 ? <p className="muted">아직 기록된 거래가 없어요.</p> : transactions.map((t) => <div className="tx-mini" key={t.id}><span>{t.category.slice(0, 1)}</span><div><b>{t.title}</b><small>{t.category}{t.scheduleId ? " · 일정 연결" : ""}</small></div><strong className={t.type}>{t.type === "expense" ? "−" : "+"}{money(t.amount)}</strong></div>)}</section></aside></div>
   </>;
@@ -31,10 +32,11 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
   data: AppData;
   selectedDate: string;
   onSelect: (date: string) => void;
-  onAdd: (date: string) => void;
+  onAdd: (date: string, startTime?: string, endTime?: string) => void;
   onEdit: (schedule: Schedule) => void;
   onDelete: (id: string) => void;
 }) {
+  const [mode, setMode] = useState<"month" | "day">("month");
   const year = cursor.getFullYear();
   const month = cursor.getMonth();
   const cells = [
@@ -48,18 +50,33 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
   const dayExpense = data.transactions
     .filter((transaction) => transaction.date === selectedDate && transaction.type === "expense")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const moveSelectedDate = (amount: number) => {
+    const next = new Date(`${selectedDate}T12:00:00`);
+    next.setDate(next.getDate() + amount);
+    onSelect(dateKey(next));
+  };
 
   return <>
     <PageHeader
-      eyebrow="한눈에 보는 기록"
-      title={`${year}년 ${month + 1}월`}
+      eyebrow={mode === "month" ? "한눈에 보는 기록" : "오늘을 설계하는 시간"}
+      title={mode === "month" ? `${year}년 ${month + 1}월` : "일간 스케줄러"}
       action={<div className="header-actions">
-        <button className="icon-button" onClick={() => setCursor(new Date(year, month - 1, 1))}>‹</button>
-        <button className="ghost" onClick={() => setCursor(new Date())}>이번 달</button>
-        <button className="icon-button" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
+        <div className="calendar-mode" aria-label="캘린더 보기 방식">
+          <button className={mode === "month" ? "active" : ""} onClick={() => setMode("month")}>월간</button>
+          <button className={mode === "day" ? "active" : ""} onClick={() => setMode("day")}>일간</button>
+        </div>
+        {mode === "month" ? <>
+          <button className="icon-button" aria-label="이전 달" onClick={() => setCursor(new Date(year, month - 1, 1))}>‹</button>
+          <button className="ghost" onClick={() => setCursor(new Date())}>이번 달</button>
+          <button className="icon-button" aria-label="다음 달" onClick={() => setCursor(new Date(year, month + 1, 1))}>›</button>
+        </> : <>
+          <button className="icon-button" aria-label="이전 날짜" onClick={() => moveSelectedDate(-1)}>‹</button>
+          <button className="ghost" onClick={() => onSelect(dateKey())}>오늘</button>
+          <button className="icon-button" aria-label="다음 날짜" onClick={() => moveSelectedDate(1)}>›</button>
+        </>}
       </div>}
     />
-    <div className="calendar-layout">
+    {mode === "day" ? <DayScheduler date={selectedDate} schedules={selectedSchedules} onAdd={onAdd} onEdit={onEdit} /> : <div className="calendar-layout">
       <section className="calendar-card">
         <div className="weekdays">{["일", "월", "화", "수", "목", "금", "토"].map((day) => <b key={day}>{day}</b>)}</div>
         <div className="calendar-grid">{cells.map((day, index) => {
@@ -102,7 +119,7 @@ export function CalendarView({ cursor, setCursor, data, selectedDate, onSelect, 
         </div>
         <button className="primary full" onClick={() => onAdd(selectedDate)}>＋ 이 날짜에 일정 추가</button>
       </aside>
-    </div>
+    </div>}
   </>;
 }
 
@@ -221,6 +238,49 @@ export function DiaryView({ date, onDate, diary, schedules, transactions, userId
   </>;
 }
 
+function profileDate(value?: string) {
+  if (!value) return "기록 없음";
+  return new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long", day: "numeric" }).format(new Date(value));
+}
+
+export function ProfileView({ data, setData, onToast, onOpenSettings }: { data: AppData; setData: (data: AppData) => void; onToast: (message: string) => void; onOpenSettings: () => void }) {
+  const [nickname, setNickname] = useState(data.user.name);
+  const [realName, setRealName] = useState(data.user.realName ?? "");
+  const [saving, setSaving] = useState(false);
+  const recordDates = new Set([
+    ...data.schedules.map((item) => item.date),
+    ...data.transactions.map((item) => item.date),
+    ...data.diaries.map((item) => item.date),
+    ...data.dailyRecords.map((item) => item.date),
+  ]);
+  const saveProfile = async (event: FormEvent) => {
+    event.preventDefault();
+    const displayName = nickname.trim();
+    const realNameValue = realName.trim();
+    if (!displayName) return onToast("닉네임을 입력해 주세요");
+    if (displayName.length > 30) return onToast("닉네임은 30자 이내로 입력해 주세요");
+    if (realNameValue.length > 30) return onToast("실명은 30자 이내로 입력해 주세요");
+    if (/[<>]/.test(displayName) || /[<>]/.test(realNameValue)) return onToast("사용할 수 없는 문자가 포함되어 있어요");
+    if (displayName === data.user.name && realNameValue === (data.user.realName ?? "")) return onToast("변경된 정보가 없어요");
+    setSaving(true);
+    try {
+      const { error } = await getSupabase()!.auth.updateUser({ data: { display_name: displayName, real_name: realNameValue } });
+      if (error) return onToast(error.message);
+      setData({ ...data, user: { ...data.user, name: displayName, realName: realNameValue } });
+      onToast("프로필 정보를 변경했어요");
+    } catch (error) {
+      onToast(error instanceof Error ? error.message : "프로필을 변경하지 못했어요");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return <><PageHeader eyebrow="나의 온결" title="프로필" /><div className="profile-layout">
+    <section className="profile-hero"><div className="profile-avatar" aria-hidden="true">{data.user.name.slice(0, 1).toUpperCase()}</div><span className="profile-badge">PERSONAL ARCHIVE</span><h2>{data.user.name}</h2><p>삶의 결을 잇는 나만의 기록</p><div className="profile-counts"><span><b>{data.schedules.length}</b>일정</span><span><b>{data.transactions.length}</b>거래</span><span><b>{data.diaries.length}</b>감정 일기</span><span><b>{data.dailyRecords.length}</b>하루 기록</span></div></section>
+    <div className="profile-details"><section className="profile-card"><div className="section-title"><div><h2>기본 정보</h2><span>계정과 기록에 사용하는 정보</span></div></div><form className="profile-name-form" onSubmit={saveProfile}><label className="field"><span>닉네임</span><input value={nickname} maxLength={30} placeholder="온결에 표시할 이름" onChange={(event) => setNickname(event.target.value)} /></label><label className="field"><span>실명</span><input value={realName} maxLength={30} placeholder="선택 입력" onChange={(event) => setRealName(event.target.value)} /></label><button className="primary" disabled={saving}>{saving ? "저장 중…" : "변경사항 저장"}</button></form><div className="profile-account"><span><small>로그인 이메일</small><b>{data.user.email}</b></span><span><small>온결을 시작한 날</small><b>{profileDate(data.user.createdAt)}</b></span><span><small>최근 로그인</small><b>{profileDate(data.user.lastSignInAt)}</b></span></div></section>
+    <section className="profile-card profile-history"><div><p>기록한 날짜</p><strong>{recordDates.size}<small>일</small></strong><span>일정, 소비, 감정과 작은 순간을 남긴 날이에요.</span></div><button className="ghost" onClick={onOpenSettings}>계정 및 보안 설정</button></section></div>
+  </div></>;
+}
 export function SettingsView({ data, setData, onToast }: { data: AppData; setData: (d: AppData) => void; onToast: (s: string) => void }) {
   const [hasLegacy, setHasLegacy] = useState(() => typeof window !== "undefined" && Boolean(localStorage.getItem(LEGACY_STORE_KEY)));
   const [email, setEmail] = useState(data.user.email);

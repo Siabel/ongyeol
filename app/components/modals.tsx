@@ -57,6 +57,7 @@ export function PlaceSearchField({ place, address, onChange }: { place: string; 
 
 export function TimePicker({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [hourValue, minuteValue] = formatTime(value || "09:00").split(":").map(Number);
+  const minuteOptions = [...new Set([0, 10, 20, 30, 40, 50, minuteValue])].sort((a, b) => a - b);
   const period = hourValue >= 12 ? "PM" : "AM";
   const hour = hourValue % 12 || 12;
   const update = (nextPeriod: string, nextHour: number, nextMinute: number) => {
@@ -65,7 +66,7 @@ export function TimePicker({ label, value, onChange }: { label: string; value: s
   };
   const setCurrentTime = () => {
     const now = new Date();
-    onChange(`${pad(now.getHours())}:${pad(now.getMinutes())}`);
+    onChange(`${pad(now.getHours())}:${pad(Math.floor(now.getMinutes() / 10) * 10)}`);
   };
 
   return <div className="field time-field">
@@ -78,14 +79,17 @@ export function TimePicker({ label, value, onChange }: { label: string; value: s
         {Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}시</option>)}
       </select>
       <select aria-label={`${label} 분`} value={minuteValue} onChange={(event) => update(period, hour, Number(event.target.value))}>
-        {Array.from({ length: 60 }, (_, index) => index).map((item) => <option key={item} value={item}>{pad(item)}분</option>)}
+        {minuteOptions.map((item) => <option key={item} value={item}>{pad(item)}분</option>)}
       </select>
       <button type="button" className="clock-button" aria-label={`${label}에 현재 시간 반영`} title="현재 시간 반영" onClick={setCurrentTime}>◷</button>
     </div>
   </div>;
 }
 
-export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpense, editSeries, setEditSeries, onClose, onSubmit }: { draft: Schedule; setDraft: (s: Schedule) => void; completionMode: boolean; hasActualExpense: boolean; editSeries: boolean; setEditSeries: (value: boolean) => void; onClose: () => void; onSubmit: (e: FormEvent) => void }) {
+export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpense, editSeries, setEditSeries, saving, onClose, onDelete, onSubmit }: { draft: Schedule; setDraft: (s: Schedule) => void; completionMode: boolean; hasActualExpense: boolean; editSeries: boolean; setEditSeries: (value: boolean) => void; saving: boolean; onClose: () => void; onDelete?: () => void; onSubmit: (e: FormEvent) => void }) {
+  const selectedStartTime = completionMode ? draft.actualStartTime : draft.startTime;
+  const selectedEndTime = completionMode ? draft.actualEndTime : draft.endTime;
+  const invalidTimeRange = Boolean(selectedStartTime && selectedEndTime && selectedEndTime <= selectedStartTime);
   const setRecurring = (isRecurring: boolean) => setDraft({
     ...draft,
     isRecurring,
@@ -100,6 +104,7 @@ export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpens
       <label className="field"><span>상태</span><select disabled={completionMode} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as ScheduleStatus })}>{Object.entries(statusMap).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
       <TimePicker label={completionMode ? "실제 시작 시간" : "예정 시작 시간"} value={completionMode ? draft.actualStartTime : draft.startTime} onChange={(value) => setDraft(completionMode ? { ...draft, actualStartTime: value } : { ...draft, startTime: value })} />
       <TimePicker label={completionMode ? "실제 종료 시간" : "예정 종료 시간"} value={completionMode ? draft.actualEndTime : draft.endTime} onChange={(value) => setDraft(completionMode ? { ...draft, actualEndTime: value } : { ...draft, endTime: value })} />
+      {invalidTimeRange && <p className="time-range-error full-span" role="alert">종료 시간은 시작 시간보다 늦어야 해요.</p>}
       <PlaceSearchField place={draft.place} address={draft.address} onChange={(place, address) => setDraft({ ...draft, place, address })} />
       <label className="field"><span>주소</span><input value={draft.address} onChange={(event) => setDraft({ ...draft, address: event.target.value })} placeholder="검색 결과 선택 또는 직접 입력" /></label>
       <label className="field"><span>관련 인물</span><input value={draft.people} onChange={(event) => setDraft({ ...draft, people: event.target.value })} /></label>
@@ -107,7 +112,7 @@ export function ScheduleModal({ draft, setDraft, completionMode, hasActualExpens
       {!completionMode && <div className="fixed-section full-span schedule-repeat"><label className="check-field fixed-check"><input type="checkbox" checked={draft.isRecurring} onChange={(event) => setRecurring(event.target.checked)} /> 반복 일정</label>{draft.isRecurring && <div className="repeat-settings"><span>반복 주기</span><div className="repeat-frequency">{([['daily', '매일'], ['weekly', '매주'], ['monthly', '매월'], ['yearly', '매년']] as const).map(([value, label]) => <button type="button" key={value} className={draft.repeatFrequency === value ? "active" : ""} onClick={() => setDraft({ ...draft, repeatFrequency: value })}>{label}</button>)}</div><label className="field repeat-end"><span>반복 종료일</span><input type="date" required value={draft.repeatEndDate ?? ""} min={draft.date} onChange={(event) => setDraft({ ...draft, repeatEndDate: event.target.value })} /></label>{draft.seriesId && <label className="check-field series-check"><input type="checkbox" checked={editSeries} onChange={(event) => setEditSeries(event.target.checked)} /> 이 회차 이후 반복 일정 전체 수정</label>}</div>}</div>}
       <label className="field full-span"><span>메모</span><textarea rows={3} value={draft.memo} onChange={(event) => setDraft({ ...draft, memo: event.target.value })} /></label>
     </div>
-    <div className="modal-actions"><button type="button" className="ghost" onClick={onClose}>취소</button><button className="primary">{completionMode && (draft.expectedCost > 0 || hasActualExpense) ? "다음: 실제 지출" : completionMode ? "완료로 변경" : "저장"}</button></div>
+    <div className="modal-actions">{onDelete && <button type="button" className="modal-delete" disabled={saving} onClick={onDelete}>일정 삭제</button>}<button type="button" className="ghost" onClick={onClose}>취소</button><button className="primary" disabled={invalidTimeRange || saving}>{saving ? "저장 중…" : completionMode && (draft.expectedCost > 0 || hasActualExpense) ? "다음: 실제 지출" : completionMode ? "완료로 변경" : "저장"}</button></div>
   </form></div>;
 }
 
@@ -179,4 +184,3 @@ export function TransactionModal({ draft, setDraft, schedules, lockedScheduleId,
 export function RecordModal({ draft, setDraft, schedules, onClose, onSubmit }: { draft: DailyRecord; setDraft: (r: DailyRecord) => void; schedules: Schedule[]; onClose: () => void; onSubmit: (e: FormEvent) => void }) {
   return <div className="modal-backdrop"><form className="modal small" onSubmit={onSubmit}><div className="modal-head"><div><p>DAILY RECORD</p><h2>{draft.id ? "하루 기록 수정" : "작은 순간 기록"}</h2></div><button type="button" onClick={onClose}>×</button></div><div className="form-grid"><label className="field"><span>날짜</span><input type="date" required value={draft.date} onChange={(e) => setDraft({ ...draft, date: e.target.value })} /></label><label className="field"><span>시간</span><input type="time" value={draft.time} onChange={(e) => setDraft({ ...draft, time: e.target.value })} /></label><label className="field full-span"><span>제목</span><input autoFocus required value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} placeholder="어떤 순간이었나요?" /></label><label className="field full-span"><span>기록</span><textarea rows={7} required value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} placeholder="감정에 구애받지 않고 자유롭게 적어보세요" /></label><label className="field full-span"><span>관련 일정 (선택)</span><select value={draft.scheduleId ?? ""} onChange={(e) => setDraft({ ...draft, scheduleId: e.target.value || undefined })}><option value="">연결하지 않음</option>{schedules.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}</select></label></div><div className="modal-actions"><button type="button" className="ghost" onClick={onClose}>취소</button><button className="primary">저장</button></div></form></div>;
 }
-

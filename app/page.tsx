@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   loadHaruData, removeDailyRecord, removeSchedule, removeTransaction,
   upsertDailyRecord, upsertDiary, upsertSchedule, upsertTransaction,
@@ -12,7 +12,7 @@ import type { AppData, DailyRecord, EmotionDiary, Schedule, ScheduleStatus, Tran
 import { AuthGate, SetupRequired } from "./components/auth-gate";
 import { BrandLogo, NavButton } from "./components/common";
 import { RecordModal, ScheduleModal, TransactionModal } from "./components/modals";
-import { CalendarView, DiaryView, LedgerView, RecordsView, SettingsView, StatsView, TodayView } from "./components/views";
+import { CalendarView, DiaryView, LedgerView, ProfileView, RecordsView, SettingsView, StatsView, TodayView } from "./components/views";
 import { dateKey, expenseCategories, newId, pad } from "./components/ui-helpers";
 
 const blankSchedule = (date: string, userId: string): Schedule => ({
@@ -50,6 +50,9 @@ export default function Home() {
   const [editScheduleSeries, setEditScheduleSeries] = useState(false);
   const [editTransactionSeries, setEditTransactionSeries] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [dataLoadRevision, setDataLoadRevision] = useState(0);
+  const scheduleSaveLock = useRef(false);
 
   useEffect(() => {
     const client = getSupabase();
@@ -72,10 +75,11 @@ export default function Home() {
   useEffect(() => {
     if (!user) return;
     let alive = true;
+    setLoadError("");
     loadHaruData(user).then((next) => { if (alive) { setData(next); setLoadError(""); } })
-      .catch((error: Error) => { if (alive) setLoadError(error.message); })
+      .catch((error: Error) => { if (alive) setLoadError(error.message); });
     return () => { alive = false; };
-  }, [user]);
+  }, [user, dataLoadRevision]);
 
   useEffect(() => {
     if (!toast) return;
@@ -108,7 +112,15 @@ export default function Home() {
 
   const saveSchedule = async (event: FormEvent) => {
     event.preventDefault();
-    if (!scheduleDraft?.title.trim() || !data) return;
+    if (!scheduleDraft?.title.trim() || !data || scheduleSaveLock.current) return;
+    const selectedStartTime = completingScheduleId === scheduleDraft.id ? scheduleDraft.actualStartTime : scheduleDraft.startTime;
+    const selectedEndTime = completingScheduleId === scheduleDraft.id ? scheduleDraft.actualEndTime : scheduleDraft.endTime;
+    if (!selectedStartTime || !selectedEndTime || selectedEndTime <= selectedStartTime) {
+      setToast("종료 시간은 시작 시간보다 늦어야 해요");
+      return;
+    }
+    scheduleSaveLock.current = true;
+    setSavingSchedule(true);
     const item = { ...scheduleDraft, id: scheduleDraft.id || newId(), userId: data.user.id, expectedCost: Number(scheduleDraft.expectedCost) || 0 };
     try {
       if (completingScheduleId === item.id) {
@@ -161,13 +173,21 @@ export default function Home() {
       setCompletingScheduleId(null);
       setToast(completingScheduleId === item.id ? "실제 일정을 확인하고 완료했어요" : scheduleDraft.id ? "일정을 수정했어요" : "새 일정을 추가했어요");
     } catch (error) { notifyError(error); }
+    finally {
+      scheduleSaveLock.current = false;
+      setSavingSchedule(false);
+    }
   };
   const deleteSchedule = async (id: string) => {
     try {
       await removeSchedule(id);
       setData((prev) => prev && ({ ...prev, schedules: prev.schedules.filter((s) => s.id !== id), transactions: prev.transactions.map((t) => t.scheduleId === id ? { ...t, scheduleId: undefined } : t), dailyRecords: prev.dailyRecords.map((r) => r.scheduleId === id ? { ...r, scheduleId: undefined } : r) }));
       setMenuId(null); setToast("일정을 삭제했어요. 실제 거래와 하루 기록은 유지돼요");
-    } catch (error) { notifyError(error); }
+      return true;
+    } catch (error) {
+      notifyError(error);
+      return false;
+    }
   };
   const updateStatus = async (schedule: Schedule, status: ScheduleStatus) => {
     if (status === "done") {
@@ -287,6 +307,10 @@ export default function Home() {
     setCompletingScheduleId(null);
     setEditScheduleSeries(false);
   };
+  const deleteScheduleFromModal = async () => {
+    if (!scheduleDraft?.id || !window.confirm(`“${scheduleDraft.title}” 일정을 삭제할까요?\n연결된 실제 거래와 하루 기록은 유지됩니다.`)) return;
+    if (await deleteSchedule(scheduleDraft.id)) closeScheduleModal();
+  };
   const closeTransactionModal = () => {
     setTxDraft(null);
     setPendingCompletion(null);
@@ -298,7 +322,7 @@ export default function Home() {
   if (!isSupabaseConfigured) return <SetupRequired />;
   if (loading) return <main className="loading"><BrandLogo /><span>기록의 결을 펼치는 중…</span></main>;
   if (!user) return <AuthGate />;
-  if (loadError) return <main className="loading error-state"><b>데이터를 불러오지 못했어요</b><span>{loadError}</span><button className="primary" onClick={() => location.reload()}>다시 시도</button></main>;
+  if (loadError) return <main className="loading error-state"><b>데이터 연결이 잠시 지연되고 있어요</b><span>{loadError}</span><button className="primary" onClick={() => setDataLoadRevision((revision) => revision + 1)}>다시 연결</button></main>;
   if (!data) return <main className="loading">내 기록을 불러오는 중…</main>;
 
   return <div className={`app-shell ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -309,39 +333,54 @@ export default function Home() {
         <NavButton icon="⌂" label="오늘" active={view === "today"} onClick={() => { changeDate(dateKey()); setView("today"); }} />
         <NavButton icon="□" label="캘린더" active={view === "calendar"} onClick={() => setView("calendar")} />
         <NavButton icon="₩" label="가계부" active={view === "ledger"} onClick={() => setView("ledger")} />
-        <NavButton icon="▥" label="통계" active={view === "stats"} onClick={() => setView("stats")} />
         <NavButton icon="✎" label="하루 기록" active={view === "records"} onClick={() => setView("records")} />
         <NavButton icon="♡" label="감정 일기" active={view === "diary"} onClick={() => setView("diary")} />
+        <NavButton icon="▥" label="통계" active={view === "stats"} onClick={() => setView("stats")} />
       </nav>
       <div className="sidebar-bottom">
         <NavButton icon="⚙" label="설정" active={view === "settings"} onClick={() => setView("settings")} />
-        <div className="profile"><span>{data.user.name.slice(0, 1).toUpperCase()}</span><div><b>{data.user.name}</b><small>{data.user.email}</small></div></div>
+        <button className={`profile profile-button ${view === "profile" ? "active" : ""}`} onClick={() => setView("profile")}><span>{data.user.name.slice(0, 1).toUpperCase()}</span><div><b>{data.user.name}</b><small>{data.user.email}</small></div></button>
       </div>
     </aside>
 
-    <header className="mobile-topbar"><button className="mobile-brand" onClick={() => changeMobileView("today")} aria-label="온결 오늘 화면으로 이동"><BrandLogo /></button><button className="mobile-settings" aria-label="설정 열기" onClick={() => changeMobileView("settings")}>⚙</button></header>
+    <header className="mobile-topbar"><button className="mobile-brand" onClick={() => changeMobileView("today")} aria-label="온결 오늘 화면으로 이동"><BrandLogo /></button><button className={`mobile-profile ${view === "profile" ? "active" : ""}`} aria-label="프로필 열기" onClick={() => changeMobileView("profile")}><span>{data.user.name.slice(0, 1).toUpperCase()}</span></button></header>
 
-    <main className="content">
+    <main className={`content view-${view}`}>
       {view === "today" && <TodayView date={selectedDate} schedules={daySchedules} transactions={dayTransactions} diary={dayDiary} records={dayRecords} onAdd={() => setScheduleDraft(blankSchedule(selectedDate, data.user.id))} onEdit={setScheduleDraft} onMenu={setMenuId} menuId={menuId} onDelete={deleteSchedule} onStatus={updateStatus} onActual={editActualExpense} onDiary={() => setView("diary")} onRecords={() => setView("records")} />}
-      {view === "calendar" && <CalendarView cursor={monthCursor} setCursor={setMonthCursor} data={data} selectedDate={selectedDate} onSelect={changeDate} onAdd={(date) => setScheduleDraft(blankSchedule(date, data.user.id))} onEdit={setScheduleDraft} onDelete={deleteSchedule} />}
+      {view === "calendar" && <CalendarView cursor={monthCursor} setCursor={setMonthCursor} data={data} selectedDate={selectedDate} onSelect={changeDate} onAdd={(date, startTime, endTime) => setScheduleDraft({ ...blankSchedule(date, data.user.id), startTime: startTime ?? "09:00", endTime: endTime ?? "10:00" })} onEdit={setScheduleDraft} onDelete={deleteSchedule} />}
       {view === "ledger" && <LedgerView cursor={monthCursor} setCursor={setMonthCursor} transactions={monthTransactions} schedules={data.schedules.filter((s) => s.date.startsWith(monthKey))} income={income} expense={expense} expected={expected} onAdd={() => { setActualScheduleId(null); setTxDraft(blankTransaction(selectedDate, data.user.id)); }} onEdit={(transaction) => { setActualScheduleId(null); setTxDraft(transaction); }} onDelete={deleteTransaction} />}
       {view === "stats" && <StatsView cursor={monthCursor} setCursor={setMonthCursor} data={data} />}
       {view === "records" && <RecordsView date={selectedDate} onDate={changeDate} records={dayRecords} schedules={daySchedules} onAdd={() => setRecordDraft(blankRecord(selectedDate, data.user.id))} onEdit={setRecordDraft} onDelete={deleteRecord} />}
       {view === "diary" && <DiaryView key={`${selectedDate}-${dayDiary?.id ?? "new"}`} date={selectedDate} onDate={changeDate} diary={dayDiary} schedules={daySchedules} transactions={dayTransactions} userId={data.user.id} onSave={saveDiary} onAddUnplanned={() => setScheduleDraft({ ...blankSchedule(selectedDate, data.user.id), status: "done" })} />}
+      {view === "profile" && <ProfileView data={data} setData={setData} onToast={setToast} onOpenSettings={() => setView("settings")} />}
       {view === "settings" && <SettingsView data={data} setData={setData} onToast={setToast} />}
     </main>
 
     <div className="mobile-nav">
       <NavButton icon="⌂" label="오늘" active={view === "today"} onClick={() => { changeDate(dateKey()); changeMobileView("today"); }} />
       <NavButton icon="□" label="캘린더" active={view === "calendar"} onClick={() => changeMobileView("calendar")} />
-      <button className="mobile-add" aria-label="선택한 날짜에 일정 추가" onClick={() => { setMobileMenuOpen(false); setScheduleDraft(blankSchedule(selectedDate, data.user.id)); }}>＋</button>
+      <button
+        className="mobile-add"
+        aria-label={view === "ledger" ? "거래 추가" : view === "records" ? "하루 기록 추가" : "선택한 날짜에 일정 추가"}
+        onClick={() => {
+          setMobileMenuOpen(false);
+          if (view === "ledger") {
+            setActualScheduleId(null);
+            setTxDraft(blankTransaction(selectedDate, data.user.id));
+          } else if (view === "records") {
+            setRecordDraft(blankRecord(selectedDate, data.user.id));
+          } else {
+            setScheduleDraft(blankSchedule(selectedDate, data.user.id));
+          }
+        }}
+      >＋</button>
       <NavButton icon="₩" label="가계부" active={view === "ledger"} onClick={() => changeMobileView("ledger")} />
       <NavButton icon="•••" label="더보기" active={mobileMenuOpen || ["stats", "records", "diary", "settings"].includes(view)} onClick={() => setMobileMenuOpen((open) => !open)} />
     </div>
 
     {mobileMenuOpen && <dialog open className="mobile-more-backdrop" aria-label="더보기 메뉴"><section className="mobile-more-sheet"><div><b>더보기</b><button aria-label="더보기 메뉴 닫기" onClick={() => setMobileMenuOpen(false)}>×</button></div><button onClick={() => changeMobileView("records")}><span>✎</span><b>하루 기록</b><small>작은 순간을 자유롭게 기록</small></button><button onClick={() => changeMobileView("diary")}><span>♡</span><b>감정 일기</b><small>하루의 감정과 강도 돌아보기</small></button><button onClick={() => changeMobileView("stats")}><span>▥</span><b>통계</b><small>일정, 지출, 감정 흐름 확인</small></button><button onClick={() => changeMobileView("settings")}><span>⚙</span><b>설정</b><small>계정과 데이터 관리</small></button></section></dialog>}
 
-    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} onClose={closeScheduleModal} onSubmit={saveSchedule} />}
+    {scheduleDraft && <ScheduleModal draft={scheduleDraft} setDraft={setScheduleDraft} completionMode={completingScheduleId === scheduleDraft.id} hasActualExpense={data.transactions.some((transaction) => transaction.source === "schedule_actual" && transaction.scheduleId === scheduleDraft.id)} editSeries={editScheduleSeries} setEditSeries={setEditScheduleSeries} saving={savingSchedule} onClose={closeScheduleModal} onDelete={scheduleDraft.id && completingScheduleId !== scheduleDraft.id ? deleteScheduleFromModal : undefined} onSubmit={saveSchedule} />}
     {txDraft && <TransactionModal draft={txDraft} setDraft={setTxDraft} schedules={data.schedules.filter((s) => s.date === txDraft.date)} lockedScheduleId={actualScheduleId} editSeries={editTransactionSeries} setEditSeries={setEditTransactionSeries} onClose={closeTransactionModal} onSubmit={saveTransaction} />}
     {recordDraft && <RecordModal draft={recordDraft} setDraft={setRecordDraft} schedules={data.schedules.filter((s) => s.date === recordDraft.date)} onClose={() => setRecordDraft(null)} onSubmit={saveRecord} />}
     {toast && <div className="toast">{toast}</div>}

@@ -7,6 +7,7 @@ const uiSourcePaths = [
   "app/page.tsx",
   "app/components/auth-gate.tsx",
   "app/components/common.tsx",
+  "app/components/day-scheduler.tsx",
   "app/components/views.tsx",
   "app/components/modals.tsx",
   "app/components/ui-helpers.ts",
@@ -43,7 +44,7 @@ test("includes account, place, and daily-record flows", async () => {
   assert.match(page, /values\.password !== values\.passwordConfirmation/);
   assert.match(page, /이미 가입되어 있는 이메일입니다/);
   assert.match(page, /비밀번호가 일치하지 않아요/);
-  assert.match(page, /이름을 입력해 주세요/);
+  assert.match(page, /닉네임을 입력해 주세요/);
   assert.match(page, /resetPasswordForEmail/);
   assert.match(page, /result\.data\.user\.identities\?\.length === 0/);
   assert.match(page, /blockedSignupEmail/);
@@ -198,4 +199,124 @@ test("includes a separate Vercel build path and required deployment variables", 
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(envExample, /KAKAO_REST_API_KEY/);
+});
+
+test("provides a production-ready PWA shell and install experience", async () => {
+  const [manager, serviceWorker, manifest, layout, vercelConfig] = await Promise.all([
+    readFile(new URL("app/components/pwa-manager.tsx", root), "utf8"),
+    readFile(new URL("public/sw.js", root), "utf8"),
+    readFile(new URL("app/manifest.ts", root), "utf8"),
+    readFile(new URL("app/layout.tsx", root), "utf8"),
+    readFile(new URL("vercel.json", root), "utf8"),
+  ]);
+
+  assert.match(manager, /beforeinstallprompt/);
+  assert.match(manager, /navigator\.serviceWorker\.register\("\/sw\.js"/);
+  assert.match(manager, /오프라인/);
+  assert.match(manager, /SKIP_WAITING/);
+  assert.match(serviceWorker, /ongyeol-shell-v1/);
+  assert.match(serviceWorker, /request\.mode === "navigate"/);
+  assert.match(serviceWorker, /url\.origin !== self\.location\.origin/);
+  assert.match(manifest, /maskable-512\.png/);
+  assert.match(manifest, /icon-192\.png/);
+  assert.match(layout, /apple-touch-icon\.png/);
+  assert.match(vercelConfig, /Service-Worker-Allowed/);
+});
+
+test("keeps mobile pages within the viewport and explains unsupported Android installation", async () => {
+  const [page, styles, theme, manager] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/globals.css", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+    readFile(new URL("app/components/pwa-manager.tsx", root), "utf8"),
+  ]);
+
+  assert.match(page, /className={`content view-\${view}`}/);
+  assert.match(page, /view === "ledger" \? "거래 추가"/);
+  assert.match(styles, /\.content,\.sidebar-collapsed \.content \{ width:100%; min-width:0; max-width:100%; margin-left:0/);
+  assert.match(styles, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(theme, /\.content,\.sidebar-collapsed \.content \{ margin-left:0; \}/);
+  assert.match(manager, /Chrome에서 열기/);
+  assert.match(manager, /package=com\.android\.chrome/);
+  assert.match(manager, /7일 동안 보지 않기/);
+});
+test("provides a separate profile page backed by Supabase user metadata", async () => {
+  const [page, views, types, dataLayer, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("lib/types.ts", root), "utf8"),
+    readFile(new URL("lib/haru-data.ts", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(types, /"profile"/);
+  assert.match(page, /프로필 열기/);
+  assert.match(page, /<ProfileView/);
+  assert.match(views, /function ProfileView/);
+  assert.match(views, /display_name: displayName/);
+  assert.match(views, /real_name: realNameValue/);
+  assert.match(views, /<span>닉네임<\/span>/);
+  assert.match(views, /<span>실명<\/span>/);
+  assert.match(dataLayer, /createdAt: user\.created_at/);
+  assert.match(dataLayer, /realName: String\(user\.user_metadata\?\.real_name/);
+  assert.match(styles, /\.profile-layout/);
+});
+
+test("adds a day planner that reuses schedule data", async () => {
+  const [page, views, scheduler, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("app/components/day-scheduler.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(views, /mode === "day"/);
+  assert.match(views, /<DayScheduler/);
+  assert.match(scheduler, /DAY PLANNER/);
+  assert.match(scheduler, /positionSchedules/);
+  assert.match(scheduler, /이 시간에 일정 추가/);
+  assert.match(page, /startTime: startTime \?\? "09:00"/);
+  assert.match(styles, /\.day-scheduler/);
+  assert.match(styles, /\.scheduler-event/);
+});
+
+test("prevents duplicate schedule submissions and invalid time ranges", async () => {
+  const [page, modals, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/modals.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(page, /scheduleSaveLock\.current/);
+  assert.match(page, /selectedEndTime <= selectedStartTime/);
+  assert.match(modals, /invalidTimeRange/);
+  assert.match(modals, /\[0, 10, 20, 30, 40, 50, minuteValue\]/);
+  assert.match(modals, /disabled=\{invalidTimeRange \|\| saving\}/);
+  assert.match(styles, /\.sidebar-collapsed \.brand-copy \{ display:none!important; \}/);
+});
+
+test("keeps schedule deletion reachable from edit and today menus", async () => {
+  const [page, views, modals, styles] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("app/components/views.tsx", root), "utf8"),
+    readFile(new URL("app/components/modals.tsx", root), "utf8"),
+    readFile(new URL("app/ongyeol.css", root), "utf8"),
+  ]);
+  assert.match(page, /deleteScheduleFromModal/);
+  assert.match(page, /onDelete=\{scheduleDraft\.id/);
+  assert.match(modals, /className="modal-delete"/);
+  assert.match(views, /menu-open/);
+  assert.match(views, /aria-expanded=\{menuId === s\.id\}/);
+  assert.match(styles, /\.schedule-card\.menu-open/);
+  assert.match(styles, /\.context-menu \{ z-index:30; top:-8px/);
+  assert.match(styles, /\.sidebar:after \{ display:none; \}/);
+});
+
+test("retries the transient Supabase JWT clock error before showing a friendly recovery state", async () => {
+  const [page, dataLayer] = await Promise.all([
+    readFile(new URL("app/page.tsx", root), "utf8"),
+    readFile(new URL("lib/haru-data.ts", root), "utf8"),
+  ]);
+  assert.match(dataLayer, /PGRST303/);
+  assert.match(dataLayer, /jwt issued at future/i);
+  assert.match(dataLayer, /retryDelays = \[800, 1800, 3500, 6500\]/);
+  assert.match(page, /dataLoadRevision/);
+  assert.match(page, /다시 연결/);
 });

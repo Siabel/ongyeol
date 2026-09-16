@@ -29,9 +29,9 @@ function validate(mode: AuthMode, values: { name: string; email: string; passwor
   const email = values.email.trim();
 
   if (mode === "signup") {
-    if (!name) errors.name = "이름을 입력해 주세요.";
-    else if (name.length > 30) errors.name = "이름은 30자 이내로 입력해 주세요.";
-    else if (invalidNamePattern.test(name)) errors.name = "이름에 사용할 수 없는 문자가 포함되어 있어요.";
+    if (!name) errors.name = "닉네임을 입력해 주세요.";
+    else if (name.length > 30) errors.name = "닉네임은 30자 이내로 입력해 주세요.";
+    else if (invalidNamePattern.test(name)) errors.name = "닉네임에 사용할 수 없는 문자가 포함되어 있어요.";
   }
   if (!email) errors.email = "이메일을 입력해 주세요.";
   else if (!emailPattern.test(email)) errors.email = "올바른 이메일 형식으로 입력해 주세요.";
@@ -138,7 +138,7 @@ export function AuthGate() {
       : "가입한 이메일로 비밀번호 변경 링크를 보내드릴게요.";
 
   return <main className="auth-page"><section className="auth-stage"><aside className="auth-story"><BrandLogo inverse /><div><p>ONE FLOW, YOUR STORY</p><h2>흩어진 하루를<br />하나의 결로 이어요.</h2><span>일정과 감정, 소비와 작은 순간까지.</span></div><small>오늘의 모든 조각은 결국 나를 이루는 결이 됩니다.</small></aside><section className="auth-card"><div className="auth-card-mark">온</div><p className="auth-kicker">PRIVATE LIFE ARCHIVE</p><h1>{title}</h1><p>{description}</p><form onSubmit={submit} noValidate>
-    {mode === "signup" && <label className="field"><span>이름</span><input value={name} onChange={(event) => { setName(event.target.value); setErrors((current) => ({ ...current, name: undefined })); }} placeholder="기록에 표시할 이름" maxLength={30} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? "name-error" : undefined} />{errors.name && <small id="name-error" className="field-error">{errors.name}</small>}</label>}
+    {mode === "signup" && <label className="field"><span>닉네임</span><input value={name} onChange={(event) => { setName(event.target.value); setErrors((current) => ({ ...current, name: undefined })); }} placeholder="온결에 표시할 이름" maxLength={30} aria-invalid={Boolean(errors.name)} aria-describedby={errors.name ? "name-error" : undefined} />{errors.name && <small id="name-error" className="field-error">{errors.name}</small>}</label>}
     <label className="field"><span>이메일</span><input type="email" value={email} onChange={(event) => { setEmail(event.target.value); setBlockedSignupEmail(""); setErrors((current) => ({ ...current, email: undefined })); }} autoComplete="email" aria-invalid={Boolean(errors.email)} aria-describedby={errors.email ? "email-error" : undefined} />{errors.email && <small id="email-error" className="field-error">{errors.email}</small>}</label>
     {mode !== "recovery" && <label className="field"><span>비밀번호</span><input type="password" value={password} onChange={(event) => { setPassword(event.target.value); setErrors((current) => ({ ...current, password: undefined })); }} autoComplete={mode === "login" ? "current-password" : "new-password"} aria-invalid={Boolean(errors.password)} aria-describedby={errors.password ? "password-error" : undefined} />{errors.password && <small id="password-error" className="field-error">{errors.password}</small>}</label>}
     {mode === "signup" && <label className="field"><span>비밀번호 재확인</span><input type="password" value={passwordConfirmation} onChange={(event) => { setPasswordConfirmation(event.target.value); setErrors((current) => ({ ...current, passwordConfirmation: undefined })); }} autoComplete="new-password" aria-invalid={Boolean(errors.passwordConfirmation)} aria-describedby={errors.passwordConfirmation ? "password-confirmation-error" : undefined} />{errors.passwordConfirmation && <small id="password-confirmation-error" className="field-error">{errors.passwordConfirmation}</small>}</label>}
