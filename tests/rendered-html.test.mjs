@@ -149,11 +149,14 @@ test("keeps calendar cells fixed and supports server-side place search", async (
   assert.match(page, /title="현재 시간 반영"/);
   assert.ok(compact(styles).includes("height:112px"));
   assert.ok(compact(styles).includes("text-overflow:ellipsis"));
-  assert.match(route, /local\/search\/keyword\.json/);
-  assert.match(route, /KAKAO_REST_API_KEY/);
-  assert.match(route, /Kakao Local API request failed/);
-  assert.match(route, /호출 허용 IP 설정/);
-  assert.match(envExample, /KAKAO_REST_API_KEY/);
+  assert.match(route, /naverapihub\.apigw\.ntruss\.com\/search\/v1\/local/);
+  assert.match(route, /NAVER_API_HUB_CLIENT_ID/);
+  assert.match(route, /NAVER_API_HUB_CLIENT_SECRET/);
+  assert.match(route, /X-NCP-APIGW-API-KEY-ID/);
+  assert.match(route, /X-NCP-APIGW-API-KEY/);
+  assert.match(route, /NAVER API HUB request failed/);
+  assert.match(envExample, /NAVER_API_HUB_CLIENT_ID/);
+  assert.match(envExample, /NAVER_API_HUB_CLIENT_SECRET/);
 });
 
 test("supports strongest calendar emotion, transaction notes, categories, and collapsible navigation", async () => {
@@ -239,7 +242,8 @@ test("includes a separate Vercel build path and required deployment variables", 
   assert.doesNotMatch(vercelConfig, /outputDirectory/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(envExample, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
-  assert.match(envExample, /KAKAO_REST_API_KEY/);
+  assert.match(envExample, /NAVER_API_HUB_CLIENT_ID/);
+  assert.match(envExample, /NAVER_API_HUB_CLIENT_SECRET/);
 });
 
 test("provides a production-ready PWA shell and install experience", async () => {

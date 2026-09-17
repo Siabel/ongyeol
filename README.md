@@ -19,9 +19,9 @@
 - Vinext, Vite, Nitro
 - Supabase Auth, PostgreSQL, Row Level Security
 - Vercel
-- Kakao Local API
+- NAVER API HUB 지역 검색 API
 
-Vinext는 현재의 `app` 라우팅 구조와 서버 전용 장소 검색 API를 유지하면서 Vite 기반으로 개발하기 위해 사용합니다. 브라우저에 노출하면 안 되는 Kakao REST API 키는 `app/api/places/route.ts`에서만 사용합니다.
+Vinext는 현재의 `app` 라우팅 구조와 서버 전용 장소 검색 API를 유지하면서 Vite 기반으로 개발하기 위해 사용합니다. 브라우저에 노출하면 안 되는 NAVER API HUB 인증 정보는 `app/api/places/route.ts`에서만 사용합니다.
 
 ## 로컬 실행
 
@@ -48,11 +48,13 @@ npm run dev:mobile
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-KAKAO_REST_API_KEY=
+NAVER_API_HUB_CLIENT_ID=
+NAVER_API_HUB_CLIENT_SECRET=
 ```
 
 - Supabase의 URL과 publishable key는 브라우저에서 인증 및 데이터 요청에 사용합니다.
-- Kakao REST API 키는 장소 검색 서버 라우트에서만 사용합니다.
+- NAVER API HUB의 Client ID와 Client Secret은 장소 검색 서버 라우트에서만 사용합니다.
+- 두 NAVER 인증 변수에는 `NEXT_PUBLIC_` 접두사를 붙이지 않습니다.
 - 실제 키가 들어 있는 `.env.local`은 Git에 올리지 않습니다.
 
 ## 데이터베이스
@@ -78,7 +80,7 @@ npm test
 
 ## Vercel 배포
 
-운영 주소는 `https://jakda.vercel.app`입니다. Vercel 프로젝트에는 로컬과 같은 세 환경 변수를 설정하고 Build Command는 `npm run build:vercel`을 사용합니다. Supabase Authentication의 Site URL과 Redirect URLs에도 운영 주소를 등록해야 이메일 인증과 비밀번호 복구가 운영 도메인으로 돌아옵니다.
+운영 주소는 `https://jakda.vercel.app`입니다. Vercel 프로젝트에는 로컬과 같은 네 환경 변수를 설정하고 Build Command는 `npm run build:vercel`을 사용합니다. Supabase Authentication의 Site URL과 Redirect URLs에도 운영 주소를 등록해야 이메일 인증과 비밀번호 복구가 운영 도메인으로 돌아옵니다.
 
 운영 배포는 `release` 브랜치를 기준으로 합니다. 기능 개발은 `feat/*`, 오류 수정은 `fix/*` 브랜치에서 진행하고 검증이 끝난 변경만 `release`에 반영합니다. `master`는 운영 배포 트리거로 사용하지 않습니다.
 
