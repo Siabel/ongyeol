@@ -66,7 +66,7 @@ export const displayDate = (date: string, withYear = false) =>
 export const mapHref = (schedule: Schedule) => {
   const query = [schedule.place, schedule.address].filter(Boolean).join(" ");
   return query
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
+    ? `https://map.naver.com/p/search/${encodeURIComponent(query)}`
     : "";
 };
 export const strongestEmotion = (diary?: EmotionDiary) => {
