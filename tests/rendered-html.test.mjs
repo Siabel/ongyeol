@@ -157,6 +157,8 @@ test("keeps calendar cells fixed and supports server-side place search", async (
   assert.match(route, /NAVER API HUB request failed/);
   assert.match(envExample, /NAVER_API_HUB_CLIENT_ID/);
   assert.match(envExample, /NAVER_API_HUB_CLIENT_SECRET/);
+  assert.match(page, /map\.naver\.com\/p\/search/);
+  assert.doesNotMatch(page, /google\.com\/maps/);
 });
 
 test("supports strongest calendar emotion, transaction notes, categories, and collapsible navigation", async () => {

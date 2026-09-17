@@ -71,13 +71,16 @@ export async function GET(request: Request) {
   }
 
   const payload = (await response.json()) as NaverSearchResponse;
-  const places = (payload.items ?? []).map((place) => ({
-    id: [place.mapx, place.mapy, place.address, place.title].join(":"),
-    name: plainText(place.title),
-    address: place.address,
-    roadAddress: place.roadAddress,
-    category: place.category,
-  }));
+  const places = (payload.items ?? []).map((place) => {
+    const name = plainText(place.title);
+    return {
+      id: [place.mapx, place.mapy, place.address, name].join(":"),
+      name,
+      address: place.address,
+      roadAddress: place.roadAddress,
+      category: place.category,
+    };
+  });
 
   return Response.json({ places });
 }
